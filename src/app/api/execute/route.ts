@@ -40,9 +40,7 @@ export async function POST(req: Request) {
     return NextResponse.json({
       ...mockExecute(task, meta),
       source: "mock",
-      note: `Claude couldn't complete this one (${
-        err instanceof Error ? err.message.slice(0, 120) : "error"
-      }). Try again, or edit the instructions and re-run.`,
+      note: "That run didn't produce a usable change — usually a one-off. Press “Do it for me” again; if it keeps happening, trim the plan to a smaller step.",
     });
   }
 }

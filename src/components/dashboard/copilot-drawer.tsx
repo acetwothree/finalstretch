@@ -304,7 +304,6 @@ export function CopilotDrawer() {
 
   const [note, setNote] = useState("");
   const [advanced, setAdvanced] = useState(false);
-  const [showPlan, setShowPlan] = useState(false);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && close();
@@ -316,7 +315,6 @@ export function CopilotDrawer() {
     // reset the little ask-form state when switching tasks / closing
     setNote("");
     setAdvanced(false);
-    setShowPlan(false);
   }, [taskId, executeAsk]);
 
   const asking = executeAsk === taskId;
@@ -379,7 +377,7 @@ export function CopilotDrawer() {
                         &ldquo;Do it for me&rdquo; will
                       </p>
                       <p className="mt-1 text-sm leading-relaxed text-slate-200">
-                        {task.copilot.summary}
+                        {task.copilot.plainSummary ?? task.copilot.summary}
                       </p>
                     </div>
                   )}
@@ -403,7 +401,8 @@ export function CopilotDrawer() {
                   {asking && (
                     <div className="rounded-xl border border-cyan-400/25 bg-cyan-500/[0.06] p-4">
                       <p className="text-sm font-medium text-white">
-                        Claude will: {task.copilot.summary}
+                        Claude will:{" "}
+                        {task.copilot.plainSummary ?? task.copilot.summary}
                       </p>
 
                       <label className="mt-3 block text-xs text-slate-400">
@@ -451,35 +450,70 @@ export function CopilotDrawer() {
                     </div>
                   )}
 
-                  {/* the step-by-step (advice) — collapsed, secondary */}
-                  <div className="rounded-lg border border-white/10 bg-white/[0.02]">
-                    <button
-                      onClick={() => setShowPlan((v) => !v)}
-                      className="flex w-full items-center justify-between p-3 text-xs text-slate-400 hover:text-white"
-                    >
-                      Rather do it yourself? See the steps
-                      <ChevronDown
-                        className={cn("h-3.5 w-3.5 transition-transform", showPlan && "rotate-180")}
-                      />
-                    </button>
-                    {showPlan && (
-                      <div className="space-y-2.5 border-t border-white/10 p-3">
-                        {task.copilot.steps.map((step, i) => (
-                          <div key={i}>
-                            <p className="text-xs font-medium text-slate-100">
-                              {i + 1}. {step.title}
-                            </p>
-                            <p className="mt-0.5 text-xs leading-relaxed text-slate-400">
-                              {step.detail}
-                            </p>
-                          </div>
-                        ))}
-                        {task.copilot.manual && (
-                          <p className="whitespace-pre-wrap rounded-lg border border-white/10 bg-white/[0.02] p-2.5 font-mono text-[11px] leading-relaxed text-slate-300">
-                            {task.copilot.manual}
-                          </p>
-                        )}
-                      </div>
+                  {/* the plan — plain by default, tech behind disclosures */}
+                  <div className="rounded-lg border border-white/10 bg-white/[0.02] p-3.5">
+                    <p className="text-[11px] font-medium uppercase tracking-wider text-slate-500">
+                      The plan
+                    </p>
+                    <ol className="mt-2.5 space-y-3">
+                      {task.copilot.steps.map((step, i) => {
+                        const tech =
+                          step.detail && step.detail !== step.plain
+                            ? step.detail
+                            : null;
+                        return (
+                          <li key={i} className="flex gap-2.5">
+                            <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-white/[0.06] font-mono text-[10px] text-slate-400">
+                              {i + 1}
+                            </span>
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm font-medium text-slate-100">
+                                {step.title}
+                              </p>
+                              <p className="mt-0.5 text-xs leading-relaxed text-slate-400">
+                                {step.plain}
+                              </p>
+                              {tech && (
+                                <details className="group mt-1">
+                                  <summary className="flex cursor-pointer list-none items-center gap-1 text-[11px] text-slate-500 hover:text-slate-300">
+                                    <ChevronDown className="h-3 w-3 transition-transform group-open:rotate-180" />
+                                    Technical detail
+                                  </summary>
+                                  <p className="mt-1 whitespace-pre-wrap rounded-md border border-white/10 bg-black/30 p-2 font-mono text-[11px] leading-relaxed text-slate-300">
+                                    {tech}
+                                  </p>
+                                </details>
+                              )}
+                            </div>
+                          </li>
+                        );
+                      })}
+                    </ol>
+
+                    {task.copilot.manual && (
+                      <details className="group mt-3">
+                        <summary className="flex cursor-pointer list-none items-center gap-1 text-[11px] text-slate-500 hover:text-slate-300">
+                          <ChevronDown className="h-3 w-3 transition-transform group-open:rotate-180" />
+                          Step-by-step click-path
+                        </summary>
+                        <p className="mt-1 whitespace-pre-wrap rounded-md border border-white/10 bg-black/30 p-2.5 font-mono text-[11px] leading-relaxed text-slate-300">
+                          {task.copilot.manual}
+                        </p>
+                      </details>
+                    )}
+                    {task.copilot.codeDiff && (
+                      <details className="group mt-2">
+                        <summary className="flex cursor-pointer list-none items-center gap-1 text-[11px] text-slate-500 hover:text-slate-300">
+                          <ChevronDown className="h-3 w-3 transition-transform group-open:rotate-180" />
+                          Suggested code change
+                        </summary>
+                        <div className="mt-1">
+                          <CodeBlock
+                            code={task.copilot.codeDiff}
+                            label={task.copilot.language || "diff"}
+                          />
+                        </div>
+                      </details>
                     )}
                   </div>
                 </>

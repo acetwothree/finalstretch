@@ -86,13 +86,13 @@ export function BriefConfirm() {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="fixed inset-0 z-40 flex items-start justify-center overflow-y-auto bg-obsidian/92 px-5 py-10 sm:items-center"
+      className="fixed inset-0 z-40 flex items-start justify-center overflow-y-auto overscroll-contain bg-obsidian px-5 py-10 sm:items-center"
     >
       <motion.div
         initial={{ y: 18, scale: 0.98 }}
         animate={{ y: 0, scale: 1 }}
         transition={{ type: "spring", stiffness: 160, damping: 20 }}
-        className="w-full max-w-2xl"
+        className="w-full max-w-2xl [transform:translateZ(0)]"
       >
         <GlowCard className="p-6 sm:p-8">
           <div className="flex items-center gap-2 text-violet-300">

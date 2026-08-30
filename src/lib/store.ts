@@ -54,6 +54,35 @@ export function computeReadiness(tasks: ChecklistTask[], base: number) {
   return clamp(Math.round(base + (100 - base) * (done / total)), base, 100);
 }
 
+const CATEGORY_ORDER: Record<string, number> = {
+  "Critical Code Fixes": 0,
+  "Deployment & Compliance": 1,
+  "Product & Growth": 2,
+  "Marketing & Assets": 3,
+};
+const SEVERITY_ORDER: Record<Severity, number> = {
+  critical: 0,
+  high: 1,
+  medium: 2,
+  low: 3,
+};
+
+/** The suggested order to work the checklist: blockers first, then by category. */
+export function guidedOrder(tasks: ChecklistTask[]): ChecklistTask[] {
+  return tasks
+    .map((t, i) => ({ t, i }))
+    .sort((a, b) => {
+      const ca = CATEGORY_ORDER[a.t.category] ?? 9;
+      const cb = CATEGORY_ORDER[b.t.category] ?? 9;
+      if (ca !== cb) return ca - cb;
+      const sa = SEVERITY_ORDER[a.t.severity];
+      const sb = SEVERITY_ORDER[b.t.severity];
+      if (sa !== sb) return sa - sb;
+      return a.i - b.i;
+    })
+    .map((x) => x.t);
+}
+
 export function allows(
   plan: Plan,
   sharedView: boolean,
@@ -114,6 +143,11 @@ interface FlowState {
   checklist: ChecklistResult | null;
   sharedView: boolean;
 
+  /** Guided = one step at a time; false = the full checklist. */
+  guidedMode: boolean;
+  /** Tasks the user chose to skip for now in guided mode (not done, just deferred). */
+  skippedIds: string[];
+
   projects: SavedProject[];
   activeProjectId: string | null;
 
@@ -142,6 +176,9 @@ interface FlowState {
   startGithub: (url: string) => Promise<void>;
   clearIngestError: () => void;
   setAnswer: (id: string, value: string) => void;
+  setGuidedMode: (v: boolean) => void;
+  toggleSkip: (id: string) => void;
+  clearSkips: () => void;
   requestBrief: () => Promise<void>;
   confirmBrief: (edited: Partial<AppBrief>, builtPercent?: number) => Promise<void>;
   toggleTask: (id: string) => void;
@@ -184,6 +221,8 @@ const initial = {
   briefLoading: false,
   checklist: null,
   sharedView: false,
+  guidedMode: true,
+  skippedIds: [] as string[],
   projects: [] as SavedProject[],
   activeProjectId: null as string | null,
   plan: "free" as Plan,
@@ -364,6 +403,20 @@ export const useFlow = create<FlowState>()(
           set((s) => ({ answers: { ...s.answers, [id]: value } }));
         },
 
+        setGuidedMode(v) {
+          set({ guidedMode: v });
+        },
+        toggleSkip(id) {
+          set((s) => ({
+            skippedIds: s.skippedIds.includes(id)
+              ? s.skippedIds.filter((x) => x !== id)
+              : [...s.skippedIds, id],
+          }));
+        },
+        clearSkips() {
+          set({ skippedIds: [] });
+        },
+
         async requestBrief() {
           const { meta, answers, scanFiles } = get();
           if (!meta) return;
@@ -398,6 +451,7 @@ export const useFlow = create<FlowState>()(
             brief: finalBrief,
             builtPercent: meta.builtPercent ?? s0.builtPercent,
             stage: "generating",
+            skippedIds: [],
             error: null,
           });
           try {
@@ -446,6 +500,7 @@ export const useFlow = create<FlowState>()(
               ...s.checklist,
               tasks: s.checklist.tasks.filter((t) => t.id !== id),
             },
+            skippedIds: s.skippedIds.filter((x) => x !== id),
             copilotTaskId: s.copilotTaskId === id ? null : s.copilotTaskId,
           });
           saveActive();
@@ -667,6 +722,7 @@ export const useFlow = create<FlowState>()(
             analysis: null,
             stage: "dashboard",
             sharedView: false,
+            skippedIds: [],
             activeProjectId: id,
             unlockOpen: false,
             error: null,
@@ -746,6 +802,8 @@ export const useFlow = create<FlowState>()(
         answers: s.answers,
         brief: s.brief,
         checklist: s.checklist,
+        guidedMode: s.guidedMode,
+        skippedIds: s.skippedIds,
         plan: s.plan,
         prByTask: s.prByTask,
         projects: s.projects,
@@ -770,6 +828,8 @@ export const useFlow = create<FlowState>()(
           ...p,
           plan,
           stage,
+          guidedMode: p.guidedMode ?? true,
+          skippedIds: p.skippedIds ?? [],
           projects: p.projects ?? [],
           prByTask: p.prByTask ?? {},
           unlockOpen: false,

@@ -88,15 +88,21 @@ function normalizeCopilotShape(raw: unknown): CopilotPayload | undefined {
   const steps = arr(r.steps)
     .map((s) => {
       const so = (s ?? {}) as Record<string, unknown>;
-      return { title: str(so.title), detail: str(so.detail) };
+      const detail = str(so.detail);
+      const plain = str(so.plain);
+      return { title: str(so.title), plain: plain || detail, detail: detail || plain };
     })
     .filter((s) => s.title || s.detail)
     .slice(0, 6);
   const summary = str(r.summary);
+  const plainSummary = str(r.plainSummary);
   if (!summary && !steps.length) return undefined;
   return {
-    summary: summary || "Here's the fix.",
-    steps: steps.length ? steps : [{ title: "Do it", detail: summary }],
+    summary: summary || plainSummary || "Here's the fix.",
+    plainSummary: plainSummary || summary || undefined,
+    steps: steps.length
+      ? steps
+      : [{ title: "Do it", plain: plainSummary || summary, detail: summary }],
     codeDiff: str(r.codeDiff) || undefined,
     language: str(r.language) || undefined,
     manual: str(r.manual) || undefined,

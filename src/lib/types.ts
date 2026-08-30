@@ -46,11 +46,17 @@ export type Severity = "critical" | "high" | "medium" | "low";
 
 export interface CopilotStep {
   title: string;
+  /** Plain-language "what & why" for a non-technical founder. Shown by default. */
+  plain: string;
+  /** Technical specifics — file paths, symbols, commands. Behind a disclosure. */
   detail: string;
 }
 
 export interface CopilotPayload {
+  /** Outcome, may lean technical — used to seed the execute instructions. */
   summary: string;
+  /** Same outcome, plain enough for a non-coder. Shown in the UI. */
+  plainSummary?: string;
   steps: CopilotStep[];
   codeDiff?: string;
   language?: string;

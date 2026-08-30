@@ -4,6 +4,8 @@ import { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   ArrowLeft,
+  ArrowRight,
+  ExternalLink,
   Megaphone,
   Play,
   PartyPopper,
@@ -14,18 +16,31 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { computeReadiness, FREE_TASKS, useFlow } from "@/lib/store";
+import { canRunInBrowser, parseOwnerRepo } from "@/lib/preview";
 import { TASK_CATEGORIES } from "@/lib/types";
-import type { TaskCategory } from "@/lib/types";
+import type { Platform, TaskCategory } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { GlowCard } from "@/components/ui/glow-card";
 import { Progress } from "@/components/ui/progress";
 import { Logo } from "@/components/ui/logo";
+import { cn } from "@/lib/utils";
 import { TaskRow } from "./task-row";
+import { GuidedPath } from "./guided-path";
 import { ReadinessPanel } from "./readiness-panel";
 import { CopilotDrawer } from "./copilot-drawer";
 import { PreviewPanel } from "./preview-panel";
 import { ShareBar } from "./share-bar";
 import { PaywallCard } from "@/components/paywall/paywall-card";
+
+const PLATFORM_LABEL: Record<Platform, string> = {
+  ios: "iPhone app",
+  android: "Android app",
+  web: "Web",
+  desktop: "Desktop app",
+  game: "Game",
+  python: "Python service",
+  cli: "Command-line tool",
+};
 
 const CATEGORY_META: Record<TaskCategory, { icon: LucideIcon; accent: string }> = {
   "Critical Code Fixes": { icon: Wrench, accent: "text-rose-300" },
@@ -39,6 +54,8 @@ export function Dashboard() {
   const meta = useFlow((s) => s.meta);
   const plan = useFlow((s) => s.plan);
   const sharedView = useFlow((s) => s.sharedView);
+  const guidedMode = useFlow((s) => s.guidedMode);
+  const setGuidedMode = useFlow((s) => s.setGuidedMode);
   const reset = useFlow((s) => s.reset);
   const openPreview = useFlow((s) => s.openPreview);
   const [launched, setLaunched] = useState(false);
@@ -60,6 +77,8 @@ export function Dashboard() {
     (t) => !t.done && t.severity === "critical",
   ).length;
   const ready = readiness >= 100;
+  const canRun = canRunInBrowser(meta);
+  const repo = parseOwnerRepo(meta.githubUrl);
 
   return (
     <motion.main
@@ -146,45 +165,137 @@ export function Dashboard() {
         </div>
       </GlowCard>
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_320px]">
+      {/* preview entry point */}
+      <div className="mt-4">
+        {canRun ? (
+          <button
+            onClick={() => openPreview(null)}
+            className="group flex w-full items-center justify-between gap-3 rounded-2xl border border-cyan-400/25 bg-[linear-gradient(135deg,rgba(34,211,238,0.12),rgba(14,165,233,0.05))] px-5 py-4 text-left transition-colors hover:border-cyan-400/50"
+          >
+            <span className="flex items-center gap-3">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-cyan-400/30 bg-cyan-500/10">
+                <Play className="h-4 w-4 text-cyan-200" />
+              </span>
+              <span>
+                <span className="block text-sm font-semibold text-white">
+                  Test your project in the browser
+                </span>
+                <span className="block text-xs text-slate-400">
+                  Boots a live preview right here — no setup.
+                </span>
+              </span>
+            </span>
+            <ArrowRight className="h-4 w-4 shrink-0 text-cyan-300 transition-transform group-hover:translate-x-0.5" />
+          </button>
+        ) : (
+          <div className="rounded-2xl border border-white/10 bg-white/[0.02] px-5 py-4">
+            <p className="text-sm text-slate-300">
+              <span className="font-medium text-white">
+                {PLATFORM_LABEL[meta.platform]}
+              </span>{" "}
+              projects can&apos;t fully run in a browser preview.
+            </p>
+            <p className="mt-1 text-xs text-slate-500">
+              {repo
+                ? "Open the code in a browser editor — it still boots whatever front-end parts it can."
+                : "Download the finished project and run it in your usual tools."}
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {repo && (
+                <a
+                  href={`https://stackblitz.com/github/${repo.owner}/${repo.repo}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-white/15 bg-white/[0.03] px-3 py-2 text-xs text-slate-200 transition-colors hover:border-cyan-400/40"
+                >
+                  <ExternalLink className="h-3.5 w-3.5" />
+                  Open the code in a browser editor
+                </a>
+              )}
+              <button
+                onClick={() => openPreview(null)}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-white/15 bg-white/[0.03] px-3 py-2 text-xs text-slate-300 transition-colors hover:border-cyan-400/40"
+              >
+                <Play className="h-3.5 w-3.5" />
+                Try a partial preview anyway
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* guided / full-list switch */}
+      <div className="mt-6 flex w-fit items-center gap-1 rounded-lg border border-white/10 bg-white/[0.02] p-1">
+        {(
+          [
+            ["guided", "Guided"],
+            ["full", "Full list"],
+          ] as const
+        ).map(([k, label]) => {
+          const on = (k === "guided") === guidedMode;
+          return (
+            <button
+              key={k}
+              onClick={() => setGuidedMode(k === "guided")}
+              className={cn(
+                "rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
+                on ? "bg-white/10 text-white" : "text-slate-400 hover:text-white",
+              )}
+            >
+              {label}
+            </button>
+          );
+        })}
+      </div>
+      <p className="mt-1.5 text-xs text-slate-500">
+        {guidedMode
+          ? "One step at a time, in the order I'd tackle them. Skip or go back anytime."
+          : "Every step at once — check off whatever you want."}
+      </p>
+
+      <div className="mt-4 grid gap-6 lg:grid-cols-[1fr_320px]">
         <div className="space-y-6">
-          {TASK_CATEGORIES.map((cat) => {
-            const tasks = checklist.tasks.filter((t) => t.category === cat);
-            if (!tasks.length) return null;
-            const cm = CATEGORY_META[cat];
-            const done = tasks.filter((t) => t.done).length;
-            return (
-              <section key={cat}>
-                <div className="mb-3 flex items-center gap-2">
-                  <cm.icon className={`h-4 w-4 ${cm.accent}`} />
-                  <h2 className="text-sm font-semibold tracking-tight text-white">
-                    {cat}
-                  </h2>
-                  <span className="font-mono text-xs text-slate-500">
-                    {done}/{tasks.length}
-                  </span>
-                </div>
-                <div className="space-y-2.5">
-                  {tasks.map((t) => {
-                    const globalIdx = checklist.tasks.findIndex(
-                      (x) => x.id === t.id,
-                    );
-                    const locked = gated && globalIdx >= FREE_TASKS;
-                    return (
-                      <div key={t.id}>
-                        <TaskRow task={t} locked={locked} />
-                        {gated && globalIdx === FREE_TASKS - 1 && lockedCount > 0 && (
-                          <div className="pt-2.5">
-                            <PaywallCard lockedCount={lockedCount} />
+          {guidedMode
+            ? <GuidedPath />
+            : TASK_CATEGORIES.map((cat) => {
+                const tasks = checklist.tasks.filter((t) => t.category === cat);
+                if (!tasks.length) return null;
+                const cm = CATEGORY_META[cat];
+                const done = tasks.filter((t) => t.done).length;
+                return (
+                  <section key={cat}>
+                    <div className="mb-3 flex items-center gap-2">
+                      <cm.icon className={`h-4 w-4 ${cm.accent}`} />
+                      <h2 className="text-sm font-semibold tracking-tight text-white">
+                        {cat}
+                      </h2>
+                      <span className="font-mono text-xs text-slate-500">
+                        {done}/{tasks.length}
+                      </span>
+                    </div>
+                    <div className="space-y-2.5">
+                      {tasks.map((t) => {
+                        const globalIdx = checklist.tasks.findIndex(
+                          (x) => x.id === t.id,
+                        );
+                        const locked = gated && globalIdx >= FREE_TASKS;
+                        return (
+                          <div key={t.id}>
+                            <TaskRow task={t} locked={locked} />
+                            {gated &&
+                              globalIdx === FREE_TASKS - 1 &&
+                              lockedCount > 0 && (
+                                <div className="pt-2.5">
+                                  <PaywallCard lockedCount={lockedCount} />
+                                </div>
+                              )}
                           </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </section>
-            );
-          })}
+                        );
+                      })}
+                    </div>
+                  </section>
+                );
+              })}
         </div>
 
         <div className="hidden lg:block">

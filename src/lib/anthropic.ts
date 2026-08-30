@@ -31,7 +31,10 @@ function client() {
 
 /**
  * Pull the first balanced JSON value out of a model response, tolerating a
- * markdown fence, a prose preamble, and trailing text.
+ * markdown fence, a prose preamble, trailing text, and — critically — raw
+ * control characters (newlines, tabs) left unescaped inside string literals.
+ * Models routinely emit those inside a file's `contents`, and `JSON.parse`
+ * rejects them ("Bad control character in string literal").
  */
 export function parseJson<T>(text: string): T {
   let s = text.trim();
@@ -46,23 +49,52 @@ export function parseJson<T>(text: string): T {
   let depth = 0;
   let inStr = false;
   let esc = false;
-  let end = -1;
+  let balanced = false;
+  let out = "";
   for (let i = start; i < s.length; i++) {
     const ch = s[i];
     if (inStr) {
-      if (esc) esc = false;
-      else if (ch === "\\") esc = true;
-      else if (ch === '"') inStr = false;
+      if (esc) {
+        esc = false;
+        out += ch;
+      } else if (ch === "\\") {
+        esc = true;
+        out += ch;
+      } else if (ch === '"') {
+        inStr = false;
+        out += ch;
+      } else if (ch < " ") {
+        // raw control char inside a string — escape it so JSON.parse survives
+        out +=
+          ch === "\n"
+            ? "\\n"
+            : ch === "\r"
+              ? "\\r"
+              : ch === "\t"
+                ? "\\t"
+                : "\\u" + ch.charCodeAt(0).toString(16).padStart(4, "0");
+      } else {
+        out += ch;
+      }
       continue;
     }
+    out += ch;
     if (ch === '"') inStr = true;
     else if (ch === open) depth++;
     else if (ch === close && --depth === 0) {
-      end = i;
+      balanced = true;
       break;
     }
   }
-  return JSON.parse(s.slice(start, end === -1 ? undefined : end + 1)) as T;
+
+  try {
+    return JSON.parse(out) as T;
+  } catch {
+    // last resort: hand the untouched slice to JSON.parse for its error
+    return JSON.parse(
+      s.slice(start, balanced ? start + out.length : undefined),
+    ) as T;
+  }
 }
 
 export async function askJson<T>(opts: {

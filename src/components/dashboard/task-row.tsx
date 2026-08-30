@@ -45,37 +45,52 @@ export function TaskRow({
       </div>
 
       <button onClick={activate} className="min-w-0 flex-1 text-left">
-        <div
-          className={cn(
-            locked && "pointer-events-none select-none blur-[6px] saturate-50 [text-shadow:0_0_12px_rgba(255,255,255,0.25)]",
-          )}
-        >
-          <p
-            className={cn(
-              "text-sm font-medium tracking-tight text-slate-100",
-              task.done && "line-through decoration-slate-500",
-            )}
-          >
-            {task.title}
-          </p>
-          <p className="mt-0.5 line-clamp-2 text-xs leading-relaxed text-slate-400">
-            {task.description}
-          </p>
-        </div>
+        {locked ? (
+          // redacted placeholder — no blur filter (cheap to scroll), and the
+          // real text never reaches the DOM
+          <div aria-hidden className="select-none">
+            <div className="h-3.5 w-2/3 rounded bg-white/10" />
+            <div className="mt-2 h-2.5 w-full rounded bg-white/[0.06]" />
+            <div className="mt-1 h-2.5 w-2/5 rounded bg-white/[0.06]" />
+          </div>
+        ) : (
+          <div>
+            <p
+              className={cn(
+                "text-sm font-medium tracking-tight text-slate-100",
+                task.done && "line-through decoration-slate-500",
+              )}
+            >
+              {task.title}
+            </p>
+            <p className="mt-0.5 line-clamp-2 text-xs leading-relaxed text-slate-400">
+              {task.description}
+            </p>
+          </div>
+        )}
         <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px]">
-          <span className={cn("rounded-md border px-1.5 py-0.5 font-medium", sev.cls)}>
-            {sev.label}
-          </span>
-          <span className="flex items-center gap-1 text-slate-500">
-            <Clock className="h-3 w-3" />
-            {formatDuration(task.estMinutes)}
-          </span>
           {locked ? (
             <span className="flex items-center gap-1 text-violet-300/80">
               <Lock className="h-3 w-3" />
-              Unlock to open
+              Unlock to see this step
             </span>
-          ) : task.execute ? (
+          ) : (
+            <>
+              <span
+                className={cn(
+                  "rounded-md border px-1.5 py-0.5 font-medium",
+                  sev.cls,
+                )}
+              >
+                {sev.label}
+              </span>
+              <span className="flex items-center gap-1 text-slate-500">
+                <Clock className="h-3 w-3" />
+                {formatDuration(task.estMinutes)}
+              </span>
+            </>
+          )}
+          {locked ? null : task.execute ? (
             <span className="flex items-center gap-1 text-cyan-300">
               <Check className="h-3 w-3" />
               Executed

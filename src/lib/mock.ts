@@ -12,15 +12,26 @@ import type {
   ProjectMeta,
 } from "./types";
 
+/**
+ * Offline-fallback co-pilot payload. Steps are `[title, detail]` or
+ * `[title, plain, detail]`; when no plain is given the detail doubles as it
+ * (fine for the fallback path — the live model fills both properly).
+ */
 function cp(
   summary: string,
-  steps: [string, string][],
-  extra?: { codeDiff?: string; language?: string; manual?: string },
+  steps: ([string, string] | [string, string, string])[],
+  extra?: { codeDiff?: string; language?: string; manual?: string; plainSummary?: string },
 ): CopilotPayload {
+  const { plainSummary, ...rest } = extra ?? {};
   return {
     summary,
-    steps: steps.map(([title, detail]) => ({ title, detail })),
-    ...extra,
+    plainSummary: plainSummary ?? summary,
+    steps: steps.map((s) =>
+      s.length === 3
+        ? { title: s[0], plain: s[1], detail: s[2] }
+        : { title: s[0], plain: s[1], detail: s[1] },
+    ),
+    ...rest,
   };
 }
 
@@ -807,7 +818,7 @@ export function mockBrief(meta: ProjectMeta, answers: Answers): AppBrief {
 
 export function mockExecute(task: ChecklistTask, _meta: ProjectMeta): ExecuteResult {
   return {
-    summary: `Couldn't generate the change automatically for "${task.title}".`,
+    summary: `I couldn't write this change automatically just now — here's the plan so you (or another run) can do it.`,
     files: [
       {
         path: "FINALSTRETCH_TASK.md",
@@ -818,17 +829,19 @@ export function mockExecute(task: ChecklistTask, _meta: ProjectMeta): ExecuteRes
           task.description,
           "",
           "## The plan",
-          task.copilot?.summary ?? "See the co-pilot summary for this task.",
+          task.copilot?.plainSummary ?? task.copilot?.summary ?? "",
           "",
           ...(task.copilot?.steps ?? []).map(
-            (s, i) => `${i + 1}. **${s.title}** — ${s.detail}`,
+            (s, i) =>
+              `${i + 1}. **${s.title}** — ${s.plain}` +
+              (s.detail && s.detail !== s.plain ? `\n   - Technical: ${s.detail}` : ""),
           ),
         ].join("\n"),
       },
     ],
     commands: [],
     runLocally:
-      "This is a fallback. Re-run “Make the change” (optionally tweak the instructions first). If it keeps failing, the model may be timing out on a large file set — try a more focused task.",
+      "This is a fallback (the model was busy or the file set was too large). Press “Do it for me” again — it usually works on a retry. If it keeps failing, use “Not for me” to trim the plan down and try a smaller step.",
   };
 }
 

@@ -10,6 +10,9 @@ export function Background() {
       style={{
         backgroundImage:
           "radial-gradient(55rem 38rem at 12% -12%, rgba(139,92,246,0.15), transparent 62%), radial-gradient(48rem 40rem at 112% 114%, rgba(99,102,241,0.11), transparent 60%)",
+        // isolate on its own compositor layer so scrolling content above it
+        // (and the masked grid below) never triggers a full-viewport repaint
+        transform: "translateZ(0)",
       }}
     >
       <div className="absolute inset-0 bg-grid opacity-50" />
