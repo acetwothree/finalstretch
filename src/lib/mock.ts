@@ -792,15 +792,15 @@ export function mockBrief(meta: ProjectMeta, answers: Answers): AppBrief {
             ? "a command-line tool"
             : "a software project";
   return {
-    description: `${meta.name} is ${feature} built with ${
-      meta.detectedStack.slice(0, 3).join(", ") || meta.languages.join(", ") || "a modern stack"
-    }. The core is working — the file tree shows ${meta.fileCount} files across ${
-      meta.detectedStack[0] ?? "the app"
-    }, and the gaps are ${meta.notes.slice(0, 2).join(" and ").toLowerCase() || "final launch wiring"}. It is roughly ${
-      meta.builtPercent ?? 80
-    }% done.`,
+    description: `${meta.name} looks like ${feature} built with ${
+      meta.detectedStack.slice(0, 2).join(" and ") || meta.languages[0] || "a modern stack"
+    }, roughly ${meta.builtPercent ?? 80}% done — correct me if that's off.`,
     goal: GOAL[goal],
-    audience: "People who need what its core feature does.",
+    audience: "The people it's built for.",
+    plan: `Get it deployable, close the gaps (${
+      meta.notes.slice(0, 2).join(", ").toLowerCase() || "final launch wiring"
+    }), and prep what people see before launch.`,
+    unsure: meta.detectedType === "GitHub Repository" || !meta.detectedStack.length,
   };
 }
 

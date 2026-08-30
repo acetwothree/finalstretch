@@ -92,6 +92,10 @@ export interface AppBrief {
   description: string;
   goal: string;
   audience: string;
+  /** One plain sentence: the approach the AI will take. */
+  plan?: string;
+  /** True when the AI isn't confident what the app is / where it ships. */
+  unsure?: boolean;
   source?: "ai" | "mock";
 }
 

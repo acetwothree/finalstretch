@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import {
   ArrowLeft,
   Megaphone,
+  Play,
   PartyPopper,
   Rocket,
   Share2,
@@ -22,6 +23,7 @@ import { Logo } from "@/components/ui/logo";
 import { TaskRow } from "./task-row";
 import { ReadinessPanel } from "./readiness-panel";
 import { CopilotDrawer } from "./copilot-drawer";
+import { PreviewPanel } from "./preview-panel";
 import { ShareBar } from "./share-bar";
 import { PaywallCard } from "@/components/paywall/paywall-card";
 
@@ -38,6 +40,7 @@ export function Dashboard() {
   const plan = useFlow((s) => s.plan);
   const sharedView = useFlow((s) => s.sharedView);
   const reset = useFlow((s) => s.reset);
+  const openPreview = useFlow((s) => s.openPreview);
   const [launched, setLaunched] = useState(false);
 
   const readiness = useMemo(
@@ -72,7 +75,16 @@ export function Dashboard() {
           <ArrowLeft className="h-4 w-4" />
           {sharedView ? "Scan your own project" : "Scan another project"}
         </button>
-        <Logo />
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => openPreview(null)}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-cyan-400/25 bg-cyan-500/10 px-3 py-1.5 text-xs font-medium text-cyan-200 transition-colors hover:border-cyan-400/50"
+          >
+            <Play className="h-3.5 w-3.5" />
+            Preview
+          </button>
+          <Logo />
+        </div>
       </div>
 
       {sharedView && (
@@ -181,6 +193,7 @@ export function Dashboard() {
       </div>
 
       <CopilotDrawer />
+      <PreviewPanel />
 
       <AnimatePresence>
         {launched && (

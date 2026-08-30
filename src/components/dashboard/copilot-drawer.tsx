@@ -9,6 +9,7 @@ import {
   Download,
   GitPullRequest,
   Loader2,
+  Play,
   RotateCcw,
   TriangleAlert,
   Wand2,
@@ -64,6 +65,8 @@ function ChangeResult({ taskId }: { taskId: string }) {
   const pr = useFlow((s) => s.prByTask[taskId]);
   const prBusy = useFlow((s) => s.prBusy === taskId);
   const prError = useFlow((s) => s.prError);
+  const openPreview = useFlow((s) => s.openPreview);
+  const closeCopilot = useFlow((s) => s.closeCopilot);
 
   const [token, setToken] = useState("");
   const [showConnect, setShowConnect] = useState(false);
@@ -234,9 +237,16 @@ function ChangeResult({ taskId }: { taskId: string }) {
           )}
           {prError && <p className="text-[11px] text-rose-300">{prError}</p>}
 
-          <p className="text-center text-[11px] text-slate-600">
-            FinalStretch can&apos;t run your app — open the download in your editor.
-          </p>
+          <button
+            onClick={() => {
+              closeCopilot();
+              openPreview(taskId);
+            }}
+            className="flex h-9 w-full items-center justify-center gap-1.5 rounded-lg border border-white/12 bg-white/[0.03] text-xs font-medium text-slate-300 transition-colors hover:border-cyan-400/40 hover:text-white"
+          >
+            <Play className="h-3.5 w-3.5" />
+            Preview this change in the browser
+          </button>
         </>
       )}
 

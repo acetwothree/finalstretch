@@ -133,6 +133,9 @@ interface FlowState {
   prBusy: string | null;
   prError: string | null;
 
+  previewOpen: boolean;
+  previewTaskId: string | null;
+
   setHydrated: () => void;
   startZip: (file: File) => Promise<void>;
   startGithub: (url: string) => Promise<void>;
@@ -152,6 +155,8 @@ interface FlowState {
   applyExecute: () => Promise<void>;
   setGithubToken: (t: string) => void;
   openPullRequest: (taskId: string) => Promise<void>;
+  openPreview: (taskId?: string | null) => void;
+  closePreview: () => void;
   resumeProject: (id: string) => void;
   deleteProject: (id: string) => void;
   openUnlock: (reason?: UnlockReason) => void;
@@ -193,6 +198,8 @@ const initial = {
   prByTask: {} as Record<string, PullRequestRef>,
   prBusy: null,
   prError: null,
+  previewOpen: false,
+  previewTaskId: null as string | null,
 };
 
 export const useFlow = create<FlowState>()(
@@ -587,6 +594,13 @@ export const useFlow = create<FlowState>()(
           set({ githubToken: t.trim() || null });
         },
 
+        openPreview(taskId = null) {
+          set({ previewOpen: true, previewTaskId: taskId });
+        },
+        closePreview() {
+          set({ previewOpen: false });
+        },
+
         async openPullRequest(taskId) {
           const { checklist, meta, githubToken, brief } = get();
           const task = checklist?.tasks.find((t) => t.id === taskId);
@@ -748,6 +762,8 @@ export const useFlow = create<FlowState>()(
           appliedTaskId: null,
           prBusy: null,
           prError: null,
+          previewOpen: false,
+          previewTaskId: null,
           ingesting: false,
           error: null,
           ingestError: null,

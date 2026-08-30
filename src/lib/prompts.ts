@@ -39,7 +39,10 @@ function briefBlock(brief?: AppBrief | null) {
     `  What it is: ${brief.description}`,
     `  Primary goal: ${brief.goal}`,
     `  Audience: ${brief.audience}`,
-  ].join("\n");
+    brief.plan ? `  Approach: ${brief.plan}` : "",
+  ]
+    .filter(Boolean)
+    .join("\n");
 }
 
 const PLATFORM_COMPLIANCE: Record<string, string> = {
@@ -65,9 +68,11 @@ export function scanSystem() {
     "- summary: ONE plain sentence — what the project is + the single biggest thing between it and launch.",
     "- readiness: integer 55-92.",
     "- questions: 2 or 3. ONLY ask what you genuinely cannot infer from the files. Skip anything the file list already answers.",
-    "- One question MUST be about the user's PRIMARY GOAL (e.g. maximise paid copies / maximise free signups / just get it live / land first customers) — plain options.",
+    "- If you can't confidently tell WHAT the app does, make ONE question ask that in plain words (allowCustom true, e.g. 'In one line, what does your app do?').",
+    "- If you can't confidently tell WHERE it ships (a website / an iPhone app / an Android app / a desktop app / a game / a command-line tool), make ONE question ask that with those as plain options.",
+    "- One question MUST be about the user's PRIMARY GOAL (get people to pay / get lots of free signups / just get it live / land first customers) — plain options.",
     "- Personalize: reference something concrete you saw (a real filename, dependency, missing file).",
-    "- Plain language for a non-technical founder. Every question's LAST option is a defer like 'Not sure — you decide'. hint: one friendly line.",
+    "- Plain language for a non-technical founder. Every question's LAST option is a defer: 'Not sure — you decide'. hint: one friendly line.",
     "- Set allowCustom true only where a typed answer genuinely helps.",
   ].join("\n");
 }
@@ -88,10 +93,12 @@ export function scanUser(meta: ProjectMeta, signalFiles: string[]) {
 export function briefSystem() {
   return [
     "You are FinalStretch. Write a tiny brief so you and the user agree on what they're building before you plan it.",
-    "Return ONLY minified JSON: {\"description\":string,\"goal\":string,\"audience\":string}",
-    "- description: ONE short sentence, the way you'd explain it to a friend. Plain words, no jargon, no acronyms, no feature list. Max ~20 words.",
-    "- goal: a few plain words for what they want out of launching (e.g. \"get people to pay for it\", \"get lots of free signups\", \"just get it live\", \"land my first customers\").",
+    'Return ONLY minified JSON: {"description":string,"goal":string,"audience":string,"plan":string,"unsure":boolean}',
+    "- description: ONE plain sentence a non-technical friend would get. Name 1-2 CONCRETE things you can see in the files (a real screen, feature, or page) so it reads as THIS project, not a generic template. Max ~25 words. No jargon dump.",
+    "- If the files genuinely don't tell you what it does, set unsure:true and write the description as an honest guess: \"Looks like <X> — correct me below.\"",
+    "- goal: a few plain words for what they want from launching (e.g. \"get people to pay for it\", \"get lots of free signups\", \"just get it live\").",
     "- audience: a few plain words for who it's for.",
+    "- plan: ONE plain sentence — the approach you'll take (what you'll focus on to get this shipped). E.g. \"Get it deployable, finish the 2 unfinished screens, and prep the App Store listing.\"",
   ].join("\n");
 }
 

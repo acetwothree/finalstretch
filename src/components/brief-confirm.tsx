@@ -2,22 +2,21 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { Check, Loader2, Plus, Sparkles, X } from "lucide-react";
+import { Check, HelpCircle, Loader2, Plus, Sparkles, X } from "lucide-react";
 import { useFlow } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { GlowCard } from "@/components/ui/glow-card";
 import { cn } from "@/lib/utils";
 
 const GOAL_PRESETS = [
-  "Sell as many copies / licenses as possible",
-  "Maximise free signups",
-  "Keep people coming back (retention)",
-  "Land my first paying customers",
-  "Grow through word of mouth / sharing",
-  "Ship something I'm proud to show off",
-  "Just get it live in front of real users",
-  "Keep it small and low-maintenance",
+  "Get people to pay for it",
+  "Get lots of free signups",
+  "Get my first few customers",
+  "Just get it live",
+  "Make it something I'm proud to show",
+  "Keep it small & low-maintenance",
 ];
+const NOT_SURE = "Not sure — you pick what's best";
 
 export function BriefConfirm() {
   const brief = useFlow((s) => s.brief);
@@ -35,14 +34,18 @@ export function BriefConfirm() {
     if (brief && !touched) {
       setDescription(brief.description);
       setAudience(brief.audience);
-      // seed goals: match presets by loose keyword, else keep the AI line as one chip
       const raw = brief.goal || "";
       const parts = raw.split(/[·;\n]+/).map((s) => s.trim()).filter(Boolean);
       const seeded = new Set<string>();
       for (const part of parts.length ? parts : [raw]) {
-        const hit = GOAL_PRESETS.find((p) =>
-          part.toLowerCase().includes(p.toLowerCase().split(" ")[0]) &&
-          p.split(" ").some((w) => part.toLowerCase().includes(w.toLowerCase())),
+        if (/not sure|you (pick|decide|choose)/i.test(part)) {
+          seeded.add(NOT_SURE);
+          continue;
+        }
+        const hit = GOAL_PRESETS.find(
+          (p) =>
+            part.toLowerCase().includes(p.toLowerCase().split(" ")[0]) &&
+            p.split(" ").some((w) => part.toLowerCase().includes(w.toLowerCase())),
         );
         if (hit) seeded.add(hit);
         else if (part) seeded.add(part);
@@ -54,20 +57,27 @@ export function BriefConfirm() {
   const generating = stage === "generating";
   const toggle = (g: string) => {
     setTouched(true);
-    setGoals((cur) => (cur.includes(g) ? cur.filter((x) => x !== g) : [...cur, g]));
+    setGoals((cur) =>
+      cur.includes(g)
+        ? cur.filter((x) => x !== g)
+        : g === NOT_SURE
+          ? [NOT_SURE]
+          : [...cur.filter((x) => x !== NOT_SURE), g],
+    );
   };
   const addCustom = () => {
     const v = customGoal.trim();
     if (!v) return;
     setTouched(true);
-    setGoals((cur) => (cur.includes(v) ? cur : [...cur, v]));
+    setGoals((cur) => (cur.includes(v) ? cur : [...cur.filter((x) => x !== NOT_SURE), v]));
     setCustomGoal("");
   };
 
   const customChips = useMemo(
-    () => goals.filter((g) => !GOAL_PRESETS.includes(g)),
+    () => goals.filter((g) => g !== NOT_SURE && !GOAL_PRESETS.includes(g)),
     [goals],
   );
+  const canSubmit = description.trim() && goals.length > 0;
 
   return (
     <motion.div
@@ -85,14 +95,14 @@ export function BriefConfirm() {
           <div className="flex items-center gap-2 text-violet-300">
             <Sparkles className="h-4 w-4" />
             <span className="font-mono text-xs uppercase tracking-[0.2em]">
-              on the same page
+              quick check
             </span>
           </div>
           <h2 className="mt-3 text-2xl font-semibold tracking-tight text-white">
             Here&apos;s what I think you&apos;re building
           </h2>
           <p className="mt-2 text-sm leading-relaxed text-slate-400">
-            Fix anything that&apos;s off. The plan is built entirely around this.
+            Fix anything that&apos;s wrong — the whole plan is built from this.
           </p>
 
           {briefLoading || !brief ? (
@@ -103,6 +113,14 @@ export function BriefConfirm() {
             </div>
           ) : (
             <div className="mt-6 space-y-5">
+              {brief.unsure && (
+                <p className="flex items-start gap-2 rounded-lg border border-amber-400/25 bg-amber-500/10 p-2.5 text-xs text-amber-200">
+                  <HelpCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                  I couldn&apos;t fully tell what this is from the code — please
+                  correct the description below.
+                </p>
+              )}
+
               <label className="block">
                 <span className="text-xs font-medium uppercase tracking-wider text-slate-500">
                   What it is
@@ -113,18 +131,18 @@ export function BriefConfirm() {
                     setTouched(true);
                     setDescription(e.target.value);
                   }}
-                  rows={4}
+                  rows={3}
                   className="mt-1.5 w-full resize-y rounded-xl border border-white/12 bg-white/[0.03] p-3 text-sm leading-relaxed text-slate-100 outline-none focus:border-violet-400/60"
                 />
               </label>
 
               <div>
                 <span className="text-xs font-medium uppercase tracking-wider text-slate-500">
-                  What you&apos;re trying to do{" "}
-                  <span className="text-slate-600">— pick any that apply</span>
+                  What matters most{" "}
+                  <span className="text-slate-600">— pick any, or &ldquo;not sure&rdquo;</span>
                 </span>
                 <div className="mt-1.5 flex flex-wrap gap-2">
-                  {GOAL_PRESETS.map((g) => {
+                  {[...GOAL_PRESETS, NOT_SURE].map((g) => {
                     const on = goals.includes(g);
                     return (
                       <button
@@ -135,6 +153,7 @@ export function BriefConfirm() {
                           on
                             ? "border-violet-400 bg-violet-500/15 text-white"
                             : "border-white/12 bg-white/[0.03] text-slate-300 hover:border-violet-400/40",
+                          g === NOT_SURE && !on && "text-slate-400",
                         )}
                       >
                         {on && <Check className="h-3 w-3" />}
@@ -169,7 +188,7 @@ export function BriefConfirm() {
                     value={customGoal}
                     onChange={(e) => setCustomGoal(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addCustom())}
-                    placeholder="Add your own…"
+                    placeholder="Something else…"
                     className="h-10 flex-1 rounded-xl border border-white/12 bg-white/[0.03] px-3 text-sm text-slate-100 outline-none focus:border-violet-400/60"
                   />
                   <Button size="sm" variant="outline" onClick={addCustom} type="button">
@@ -189,21 +208,35 @@ export function BriefConfirm() {
                     setTouched(true);
                     setAudience(e.target.value);
                   }}
+                  placeholder="Not sure? Leave it — I'll guess."
                   className="mt-1.5 h-11 w-full rounded-xl border border-white/12 bg-white/[0.03] px-3.5 text-sm text-slate-100 outline-none focus:border-violet-400/60"
                 />
               </label>
+
+              {brief.plan && (
+                <div className="rounded-lg border border-white/10 bg-white/[0.02] p-3">
+                  <span className="text-xs font-medium uppercase tracking-wider text-slate-500">
+                    My plan
+                  </span>
+                  <p className="mt-1 text-sm leading-relaxed text-slate-300">
+                    {brief.plan}
+                  </p>
+                </div>
+              )}
             </div>
           )}
 
           <div className="mt-8 flex items-center justify-end">
             <Button
               size="lg"
-              disabled={briefLoading || generating || !description.trim() || !goals.length}
+              disabled={briefLoading || generating || !canSubmit}
               onClick={() =>
                 void confirmBrief({
                   description: description.trim(),
-                  goal: goals.join(" · ") || GOAL_PRESETS[6],
-                  audience: audience.trim() || "Its intended users.",
+                  goal: goals.includes(NOT_SURE)
+                    ? "Not sure — you decide"
+                    : goals.join(" · "),
+                  audience: audience.trim() || "Not sure — you decide",
                 })
               }
             >
@@ -215,7 +248,7 @@ export function BriefConfirm() {
               ) : (
                 <>
                   <Check className="h-4 w-4" />
-                  This is right — build my plan
+                  Looks right — build my plan
                 </>
               )}
             </Button>

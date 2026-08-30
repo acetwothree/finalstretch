@@ -53,6 +53,8 @@ export function normalizeBrief(raw: unknown): AppBrief {
     description,
     goal: str(r.goal, "Get it live and in front of real users."),
     audience: str(r.audience, "Its intended users."),
+    plan: str(r.plan) || undefined,
+    unsure: Boolean(r.unsure),
   };
 }
 
