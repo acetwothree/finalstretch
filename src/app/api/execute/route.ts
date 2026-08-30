@@ -10,13 +10,15 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 120;
 
 export async function POST(req: Request) {
-  const { task, meta, brief, files, instructions } = (await req.json()) as {
-    task: ChecklistTask;
-    meta: ProjectMeta;
-    brief?: AppBrief | null;
-    files?: { path: string; content: string }[];
-    instructions?: string;
-  };
+  const { task, meta, brief, files, instructions, corrections } =
+    (await req.json()) as {
+      task: ChecklistTask;
+      meta: ProjectMeta;
+      brief?: AppBrief | null;
+      files?: { path: string; content: string }[];
+      instructions?: string;
+      corrections?: string[];
+    };
   if (!task || !meta)
     return NextResponse.json({ error: "missing task or meta" }, { status: 400 });
 
@@ -31,7 +33,14 @@ export async function POST(req: Request) {
   try {
     const raw = await askJson<unknown>({
       system: executeSystem(),
-      user: executeUser(task, meta, brief ?? null, files ?? [], instructions),
+      user: executeUser(
+        task,
+        meta,
+        brief ?? null,
+        files ?? [],
+        instructions,
+        corrections ?? [],
+      ),
       maxTokens: 16000,
     });
     return NextResponse.json({ ...normalizeExecute(raw), source: "ai" });

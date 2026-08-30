@@ -9,10 +9,11 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
-  const { task, meta, brief } = (await req.json()) as {
+  const { task, meta, brief, corrections } = (await req.json()) as {
     task: ChecklistTask;
     meta: ProjectMeta;
     brief?: AppBrief | null;
+    corrections?: string[];
   };
   if (!task || !meta)
     return NextResponse.json({ error: "missing task or meta" }, { status: 400 });
@@ -24,7 +25,7 @@ export async function POST(req: Request) {
   try {
     const raw = await askJson<unknown>({
       system: copilotSystem(),
-      user: copilotUser(task, meta, brief ?? null),
+      user: copilotUser(task, meta, brief ?? null, corrections ?? []),
       maxTokens: 1800,
     });
     return NextResponse.json(normalizeCopilot(raw));

@@ -2,15 +2,9 @@
 
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import {
-  ExternalLink,
-  Loader2,
-  Monitor,
-  Smartphone,
-  Tablet,
-  X,
-} from "lucide-react";
+import { ExternalLink, Monitor, Smartphone, Tablet, X } from "lucide-react";
 import { useFlow } from "@/lib/store";
+import { FinishLineBar } from "@/components/ui/finish-line-loader";
 import {
   buildFileMap,
   canRunInBrowser,
@@ -230,9 +224,11 @@ export function PreviewPanel() {
 
             <div className="relative flex-1 overflow-auto bg-black/30 p-3">
               {status === "loading" && (
-                <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 text-sm text-slate-400">
-                  <Loader2 className="h-5 w-5 animate-spin text-cyan-300" />
-                  Booting your project… (first load installs packages, ~20–40s)
+                <div className="absolute inset-0 z-10 flex flex-col items-center justify-center px-8">
+                  <FinishLineBar
+                    label="Booting your project…"
+                    sub="First load installs packages — about 20–40s."
+                  />
                 </div>
               )}
               {status === "unsupported" && (

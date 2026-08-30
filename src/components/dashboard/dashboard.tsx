@@ -7,6 +7,7 @@ import {
   ArrowRight,
   ExternalLink,
   Megaphone,
+  MessageSquarePlus,
   Play,
   PartyPopper,
   Rocket,
@@ -24,11 +25,13 @@ import { GlowCard } from "@/components/ui/glow-card";
 import { Progress } from "@/components/ui/progress";
 import { Logo } from "@/components/ui/logo";
 import { cn } from "@/lib/utils";
+import { FinishLineBar } from "@/components/ui/finish-line-loader";
 import { TaskRow } from "./task-row";
 import { GuidedPath } from "./guided-path";
 import { ReadinessPanel } from "./readiness-panel";
 import { CopilotDrawer } from "./copilot-drawer";
 import { PreviewPanel } from "./preview-panel";
+import { CorrectionField } from "./correction-field";
 import { ShareBar } from "./share-bar";
 import { PaywallCard } from "@/components/paywall/paywall-card";
 
@@ -56,9 +59,12 @@ export function Dashboard() {
   const sharedView = useFlow((s) => s.sharedView);
   const guidedMode = useFlow((s) => s.guidedMode);
   const setGuidedMode = useFlow((s) => s.setGuidedMode);
+  const revising = useFlow((s) => s.revising);
+  const corrections = useFlow((s) => s.corrections);
   const reset = useFlow((s) => s.reset);
   const openPreview = useFlow((s) => s.openPreview);
   const [launched, setLaunched] = useState(false);
+  const [showCorrect, setShowCorrect] = useState(false);
 
   const readiness = useMemo(
     () =>
@@ -132,6 +138,30 @@ export function Dashboard() {
                 </span>
               ))}
             </div>
+
+            {!sharedView && (
+              <div className="mt-3">
+                <button
+                  onClick={() => setShowCorrect((v) => !v)}
+                  className="inline-flex items-center gap-1.5 text-xs text-slate-400 transition-colors hover:text-white"
+                >
+                  <MessageSquarePlus className="h-3.5 w-3.5" />
+                  {corrections.length
+                    ? `Got something else wrong? (${corrections.length} fixed)`
+                    : "Something off? Tell the AI what it got wrong"}
+                </button>
+                {showCorrect && (
+                  <div className="mt-2 max-w-xl rounded-xl border border-violet-400/25 bg-violet-500/[0.06] p-3">
+                    <p className="mb-2 text-[11px] leading-relaxed text-slate-400">
+                      Tell it what&apos;s actually true — wrong stack, different
+                      host, a feature that doesn&apos;t exist. It rebuilds the
+                      whole plan around it.
+                    </p>
+                    <CorrectionField onSubmitted={() => setShowCorrect(false)} />
+                  </div>
+                )}
+              </div>
+            )}
           </div>
           <Button
             size="lg"
@@ -305,6 +335,24 @@ export function Dashboard() {
 
       <CopilotDrawer />
       <PreviewPanel />
+
+      <AnimatePresence>
+        {revising && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[70] flex items-center justify-center bg-obsidian/90 px-5"
+          >
+            <GlowCard className="w-full max-w-md p-8">
+              <FinishLineBar
+                label="Rebuilding your plan with your note…"
+                sub="Every step gets re-checked against what you just told it."
+              />
+            </GlowCard>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <AnimatePresence>
         {launched && (

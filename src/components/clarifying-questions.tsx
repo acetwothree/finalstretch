@@ -2,10 +2,11 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { ArrowRight, Loader2, Sparkles } from "lucide-react";
+import { ArrowRight, Sparkles } from "lucide-react";
 import { useFlow } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { GlowCard } from "@/components/ui/glow-card";
+import { FinishLineSpinner } from "@/components/ui/finish-line-loader";
 import { cn } from "@/lib/utils";
 
 export function ClarifyingQuestions() {
@@ -132,7 +133,7 @@ export function ClarifyingQuestions() {
             >
               {busy ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <FinishLineSpinner />
                   Reviewing…
                 </>
               ) : (

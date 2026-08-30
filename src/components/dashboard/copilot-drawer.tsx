@@ -8,7 +8,6 @@ import {
   Copy,
   Download,
   GitPullRequest,
-  Loader2,
   Play,
   RotateCcw,
   TriangleAlert,
@@ -17,6 +16,11 @@ import {
 } from "lucide-react";
 import { EXECUTE_LIMIT, useFlow } from "@/lib/store";
 import { Button } from "@/components/ui/button";
+import {
+  FinishLineBar,
+  FinishLineSpinner,
+} from "@/components/ui/finish-line-loader";
+import { CorrectionField } from "./correction-field";
 import { cn } from "@/lib/utils";
 
 function CopyBtn({ text }: { text: string }) {
@@ -131,7 +135,7 @@ function ChangeResult({ taskId }: { taskId: string }) {
             >
               {prBusy ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin" /> Pushing to GitHub…
+                  <FinishLineSpinner /> Pushing to GitHub…
                 </>
               ) : (
                 <>
@@ -147,7 +151,7 @@ function ChangeResult({ taskId }: { taskId: string }) {
             >
               {applyBusy ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin" /> Preparing download…
+                  <FinishLineSpinner /> Preparing download…
                 </>
               ) : applied ? (
                 <>
@@ -360,16 +364,28 @@ export function CopilotDrawer() {
 
             <div className="flex-1 space-y-4 overflow-y-auto p-5">
               {loading || !task.copilot ? (
-                <div className="space-y-3">
-                  {[80, 95, 70, 55].map((w, i) => (
-                    <div key={i} className="shimmer h-4 rounded" style={{ width: `${w}%` }} />
-                  ))}
+                <div className="py-10">
+                  <FinishLineBar label="Working out the fix…" />
                 </div>
               ) : (
                 <>
                   <p className="text-sm leading-relaxed text-slate-300">
                     {task.description}
                   </p>
+
+                  <details className="group rounded-lg border border-white/10 bg-white/[0.02]">
+                    <summary className="flex cursor-pointer list-none items-center gap-1.5 p-2.5 text-xs text-slate-400 hover:text-white">
+                      <ChevronDown className="h-3.5 w-3.5 transition-transform group-open:rotate-180" />
+                      This isn&apos;t right? Tell the AI
+                    </summary>
+                    <div className="border-t border-white/10 p-2.5">
+                      <p className="mb-2 text-[11px] leading-relaxed text-slate-500">
+                        Correct anything it got wrong about your project. It
+                        rewrites this step and every other one to match.
+                      </p>
+                      <CorrectionField taskId={task.id} onSubmitted={close} />
+                    </div>
+                  </details>
 
                   {!asking && !task.execute && !executeLoading && (
                     <div className="rounded-lg border border-cyan-400/20 bg-cyan-500/[0.06] p-3">
@@ -384,14 +400,11 @@ export function CopilotDrawer() {
 
                   {/* the change result */}
                   {executeLoading && !task.execute ? (
-                    <div className="space-y-2 rounded-xl border border-cyan-400/25 bg-cyan-500/[0.05] p-4">
-                      <div className="flex items-center gap-2 text-sm text-cyan-200">
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        Making the change…
-                      </div>
-                      {[70, 90, 55].map((w, i) => (
-                        <div key={i} className="shimmer h-3 rounded" style={{ width: `${w}%` }} />
-                      ))}
+                    <div className="rounded-xl border border-cyan-400/25 bg-cyan-500/[0.05] p-6">
+                      <FinishLineBar
+                        label="Writing the change…"
+                        sub="Claude is editing your files — this can take a minute."
+                      />
                     </div>
                   ) : task.execute ? (
                     <ChangeResult taskId={task.id} />

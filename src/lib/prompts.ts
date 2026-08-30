@@ -31,6 +31,15 @@ function projectDigest(meta: ProjectMeta) {
     .join("\n");
 }
 
+function correctionsBlock(corrections?: string[]) {
+  if (!corrections?.length) return "";
+  return [
+    "",
+    "USER CORRECTIONS — the user reviewed your earlier read of the project and told you what's wrong or changed. These are AUTHORITATIVE. Override anything that conflicts, in THIS answer and everywhere it's relevant:",
+    ...corrections.map((c) => `  - ${c}`),
+  ].join("\n");
+}
+
 function briefBlock(brief?: AppBrief | null) {
   if (!brief) return "";
   return [
@@ -155,13 +164,33 @@ export function checklistSystem(meta: ProjectMeta) {
   ].join("\n");
 }
 
-export function checklistUser(meta: ProjectMeta, answers: Answers, brief?: AppBrief | null) {
+export function checklistUser(
+  meta: ProjectMeta,
+  answers: Answers,
+  brief?: AppBrief | null,
+  corrections?: string[],
+  prevChecklist?: { tasks: { id: string; title: string; category: string }[] } | null,
+) {
   const a = Object.entries(answers)
     .map(([k, v]) => `  - ${k}: ${v}`)
     .join("\n");
-  return `Build the plan JSON. Launch template: ${launchTemplateName(meta.platform)}.${briefBlock(
-    brief,
-  )}\n\n${projectDigest(meta)}\n\nUser answers:\n${a || "  (none)"}`;
+  const revise = prevChecklist?.tasks?.length
+    ? [
+        "",
+        "REVISION MODE: the user already has the plan below and just gave a correction. Return the FULL updated plan (same JSON shape), applying the corrections:",
+        "- Keep the SAME `id` for any task that still applies (so the user doesn't lose progress).",
+        "- DELETE tasks a correction makes pointless (e.g. a Vercel task after they say they deploy elsewhere).",
+        "- Fix titles / descriptions / estMinutes that the corrections make wrong.",
+        "- Add any newly-needed tasks. Keep the 4-category spread and 14-20 total.",
+        "Current plan:",
+        ...prevChecklist.tasks.map((t) => `  - [${t.id}] (${t.category}) ${t.title}`),
+      ].join("\n")
+    : "";
+  return `Build the plan JSON. Launch template: ${launchTemplateName(
+    meta.platform,
+  )}.${briefBlock(brief)}${correctionsBlock(corrections)}${revise}\n\n${projectDigest(
+    meta,
+  )}\n\nUser answers:\n${a || "  (none)"}`;
 }
 
 /* ------------------------------- co-pilot ------------------------------- */
@@ -184,9 +213,16 @@ export function copilotSystem() {
   ].join("\n");
 }
 
-export function copilotUser(task: ChecklistTask, meta: ProjectMeta, brief?: AppBrief | null) {
-  return `Item: ${task.title}\nWhy it matters: ${task.description}\nCategory: ${task.category} · Severity: ${task.severity}${briefBlock(
-    brief,
+export function copilotUser(
+  task: ChecklistTask,
+  meta: ProjectMeta,
+  brief?: AppBrief | null,
+  corrections?: string[],
+) {
+  return `Item: ${task.title}\nWhy it matters: ${task.description}\nCategory: ${
+    task.category
+  } · Severity: ${task.severity}${briefBlock(brief)}${correctionsBlock(
+    corrections,
   )}\n\n${projectDigest(meta)}`;
 }
 
@@ -214,6 +250,7 @@ export function executeUser(
   brief: AppBrief | null,
   files: { path: string; content: string }[],
   instructions?: string,
+  corrections?: string[],
 ) {
   const dump = files.length
     ? files.map((f) => `\n=== ${f.path} ===\n${f.content}`).join("\n")
@@ -227,6 +264,7 @@ export function executeUser(
     `Item to build: ${task.title}`,
     `Why: ${task.description}`,
     briefBlock(brief),
+    correctionsBlock(corrections),
     `Detected: ${meta.detectedType} · ${meta.detectedStack.join(", ") || "?"}`,
     directive,
     task.copilot?.codeDiff ? `Suggested diff:\n${task.copilot.codeDiff}` : "",

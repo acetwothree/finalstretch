@@ -2,10 +2,11 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { Check, HelpCircle, Loader2, Plus, Sparkles, X } from "lucide-react";
+import { Check, HelpCircle, Plus, Sparkles, X } from "lucide-react";
 import { useFlow } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { GlowCard } from "@/components/ui/glow-card";
+import { FinishLineBar, FinishLineSpinner } from "@/components/ui/finish-line-loader";
 import { cn } from "@/lib/utils";
 
 const GOAL_PRESETS = [
@@ -109,10 +110,8 @@ export function BriefConfirm() {
           </p>
 
           {briefLoading || !brief ? (
-            <div className="mt-6 space-y-3">
-              {[92, 80, 88, 60].map((w, i) => (
-                <div key={i} className="shimmer h-4 rounded" style={{ width: `${w}%` }} />
-              ))}
+            <div className="mt-10 mb-6">
+              <FinishLineBar label="Reading your project…" />
             </div>
           ) : (
             <div className="mt-6 space-y-5">
@@ -274,7 +273,7 @@ export function BriefConfirm() {
             >
               {generating ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <FinishLineSpinner />
                   Building your plan…
                 </>
               ) : (

@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Check, CreditCard, Loader2, Lock, X } from "lucide-react";
+import { Check, CreditCard, Lock, X } from "lucide-react";
 import { EXECUTE_LIMIT, PRO_PRICE, useFlow } from "@/lib/store";
+import { FinishLineSpinner } from "@/components/ui/finish-line-loader";
 
 type Phase = "idle" | "redirecting" | "processing" | "done";
 
@@ -122,12 +123,12 @@ export function UnlockModal() {
                 )}
                 {phase === "redirecting" && (
                   <>
-                    <Loader2 className="h-4 w-4 animate-spin" /> Opening secure checkout…
+                    <FinishLineSpinner /> Opening secure checkout…
                   </>
                 )}
                 {phase === "processing" && (
                   <>
-                    <Loader2 className="h-4 w-4 animate-spin" /> Confirming…
+                    <FinishLineSpinner /> Confirming…
                   </>
                 )}
                 {phase === "done" && (

@@ -162,6 +162,7 @@ export function mockChecklist(
   meta: ProjectMeta,
   answers: Answers,
   brief: AppBrief | null = null,
+  corrections: string[] = [],
 ): ChecklistResult {
   const dbAnswer = answers.database ?? "";
   const dbDetected = /prisma|supabase|firebase|drizzle|postgres|sqlite|mongo/i.test(
@@ -773,12 +774,31 @@ export function mockChecklist(
     86,
   );
 
+  // Fold in any user corrections: if they said they don't use / removed a tool,
+  // drop tasks that are about it. (The live model does this far better; this is
+  // just so the offline path visibly reacts.)
+  const dropTokens = corrections
+    .join(" ")
+    .toLowerCase()
+    .match(
+      /\b(?:not using|don'?t use|no longer use|aren'?t using|removed|dropped|ditched|switched from)\s+([a-z0-9.+-]{2,20})/g,
+    )
+    ?.map((m) => m.split(/\s+/).pop() as string) ?? [];
+  const kept = dropTokens.length
+    ? tasks.filter((t) => {
+        const hay = `${t.title} ${t.description}`.toLowerCase();
+        return !dropTokens.some((tok) => hay.includes(tok));
+      })
+    : tasks;
+
   return {
     projectSummary: `${meta.name} — ${meta.detectedType}. Goal: ${
       GOAL_LABEL[goal]
-    }. Shipping to ${target}. ${tasks.length} steps between you and live.`,
+    }. Shipping to ${target}. ${kept.length} steps between you and live.${
+      corrections.length ? " (updated from your notes)" : ""
+    }`,
     launchReadiness: base,
-    tasks: tasks.map((t) => ({ ...t, estMinutes: clip(t.estMinutes), done: false })),
+    tasks: kept.map((t) => ({ ...t, estMinutes: clip(t.estMinutes), done: false })),
   };
 }
 

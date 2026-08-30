@@ -147,6 +147,10 @@ interface FlowState {
   guidedMode: boolean;
   /** Tasks the user chose to skip for now in guided mode (not done, just deferred). */
   skippedIds: string[];
+  /** Free-text corrections the user typed to fix the AI's read of the project. */
+  corrections: string[];
+  /** True while a correction is being folded back into the whole plan. */
+  revising: boolean;
 
   projects: SavedProject[];
   activeProjectId: string | null;
@@ -179,6 +183,7 @@ interface FlowState {
   setGuidedMode: (v: boolean) => void;
   toggleSkip: (id: string) => void;
   clearSkips: () => void;
+  submitCorrection: (note: string, fromTaskId?: string) => Promise<void>;
   requestBrief: () => Promise<void>;
   confirmBrief: (edited: Partial<AppBrief>, builtPercent?: number) => Promise<void>;
   toggleTask: (id: string) => void;
@@ -223,6 +228,8 @@ const initial = {
   sharedView: false,
   guidedMode: true,
   skippedIds: [] as string[],
+  corrections: [] as string[],
+  revising: false,
   projects: [] as SavedProject[],
   activeProjectId: null as string | null,
   plan: "free" as Plan,
@@ -304,6 +311,8 @@ export const useFlow = create<FlowState>()(
           checklist: null,
           sharedView: false,
           activeProjectId: null,
+          corrections: [],
+          skippedIds: [],
           stage: "scanning",
           ingesting: false,
           error: null,
@@ -417,6 +426,60 @@ export const useFlow = create<FlowState>()(
           set({ skippedIds: [] });
         },
 
+        async submitCorrection(note, fromTaskId) {
+          const s = get();
+          const text = note.trim();
+          if (!text || !s.meta || !s.checklist) return;
+          const task = fromTaskId
+            ? s.checklist.tasks.find((t) => t.id === fromTaskId)
+            : null;
+          const entry = task ? `About "${task.title}": ${text}` : text;
+          const corrections = [...s.corrections, entry];
+          set({ corrections, revising: true, error: null });
+
+          let next: ChecklistResult | null = null;
+          try {
+            next = await postJson<ChecklistResult>("/api/checklist", {
+              meta: s.meta,
+              answers: s.answers,
+              brief: s.brief,
+              corrections,
+              prevChecklist: s.checklist,
+            });
+          } catch {
+            next = null;
+          }
+
+          if (!next || !next.tasks?.length) {
+            set({
+              revising: false,
+              error:
+                "Couldn't rebuild the plan just now — your note is saved, try again in a moment.",
+            });
+            return;
+          }
+
+          // carry over progress + any generated change, matched by id
+          const prev = new Map(s.checklist.tasks.map((t) => [t.id, t]));
+          const merged: ChecklistResult = {
+            ...next,
+            tasks: next.tasks.map((t) => {
+              const old = prev.get(t.id);
+              return old
+                ? { ...t, done: old.done, execute: old.execute }
+                : t;
+            }),
+          };
+          set({
+            checklist: merged,
+            revising: false,
+            skippedIds: s.skippedIds.filter((id) =>
+              merged.tasks.some((t) => t.id === id),
+            ),
+          });
+          saveActive();
+        },
+
         async requestBrief() {
           const { meta, answers, scanFiles } = get();
           if (!meta) return;
@@ -523,6 +586,7 @@ export const useFlow = create<FlowState>()(
               task,
               meta: s0.meta,
               brief: s0.brief,
+              corrections: s0.corrections,
             });
           } catch {
             payload = mockCopilot(task);
@@ -580,7 +644,8 @@ export const useFlow = create<FlowState>()(
 
         async runExecute(verifySteps) {
           const taskId = get().executeAsk;
-          const { checklist, meta, brief, executeInstructions } = get();
+          const { checklist, meta, brief, executeInstructions, corrections } =
+            get();
           const task = checklist?.tasks.find((t) => t.id === taskId);
           if (!task || !meta) {
             set({ executeAsk: null });
@@ -597,6 +662,7 @@ export const useFlow = create<FlowState>()(
               brief,
               files,
               instructions: executeInstructions,
+              corrections,
               verifySteps,
             });
           } catch {
@@ -723,6 +789,8 @@ export const useFlow = create<FlowState>()(
             stage: "dashboard",
             sharedView: false,
             skippedIds: [],
+            corrections: [],
+            revising: false,
             activeProjectId: id,
             unlockOpen: false,
             error: null,
@@ -804,6 +872,7 @@ export const useFlow = create<FlowState>()(
         checklist: s.checklist,
         guidedMode: s.guidedMode,
         skippedIds: s.skippedIds,
+        corrections: s.corrections,
         plan: s.plan,
         prByTask: s.prByTask,
         projects: s.projects,
@@ -830,6 +899,8 @@ export const useFlow = create<FlowState>()(
           stage,
           guidedMode: p.guidedMode ?? true,
           skippedIds: p.skippedIds ?? [],
+          corrections: p.corrections ?? [],
+          revising: false,
           projects: p.projects ?? [],
           prByTask: p.prByTask ?? {},
           unlockOpen: false,

@@ -2,7 +2,8 @@
 
 import { useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowRight, FileArchive, FolderGit2, Loader2, UploadCloud } from "lucide-react";
+import { ArrowRight, FileArchive, FolderGit2, UploadCloud } from "lucide-react";
+import { FinishLineSpinner } from "@/components/ui/finish-line-loader";
 import { useFlow } from "@/lib/store";
 import { cn } from "@/lib/utils";
 import { IngestErrorCard } from "@/components/ingest-error-card";
@@ -77,7 +78,7 @@ export function Dropzone() {
             className="flex h-16 w-16 items-center justify-center rounded-2xl border border-violet-400/30 bg-violet-500/10 shadow-[0_0_30px_-6px_rgb(139_92_246/0.7)]"
           >
             {ingesting ? (
-              <Loader2 className="h-7 w-7 animate-spin text-violet-300" />
+              <FinishLineSpinner className="h-7 w-7" />
             ) : dragging ? (
               <FileArchive className="h-7 w-7 text-violet-200" />
             ) : (
