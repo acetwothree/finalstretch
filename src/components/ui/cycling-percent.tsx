@@ -3,18 +3,23 @@
 import { useEffect, useRef, useState } from "react";
 
 const VALUES = [65, 70, 80, 85, 90];
-const HOLD_MS = 1400;
-const STEP_MS = 30;
+const HOLD_MS = 2200;
+const STEP_MS = 70;
 
-/**
- * Electric gradient percentage that smoothly counts between a loop of values.
- * Timer-driven (not rAF) so it keeps ticking even when the tab isn't composited.
- */
+/** Gradient percentage that slowly counts between a loop of values. */
 export function CyclingPercent() {
   const [n, setN] = useState(VALUES[0]);
   const cur = useRef(VALUES[0]);
 
   useEffect(() => {
+    if (
+      typeof window !== "undefined" &&
+      window.matchMedia?.("(prefers-reduced-motion: reduce)").matches
+    ) {
+      setN(80);
+      return;
+    }
+
     let idx = 0;
     let timer: ReturnType<typeof setTimeout>;
     let alive = true;
@@ -23,7 +28,6 @@ export function CyclingPercent() {
       idx = (idx + 1) % VALUES.length;
       const target = VALUES[idx];
       const dir = target > cur.current ? 1 : -1;
-
       const tick = () => {
         if (!alive) return;
         if (cur.current === target) {
@@ -44,15 +48,5 @@ export function CyclingPercent() {
     };
   }, []);
 
-  return (
-    <span className="relative inline-block align-baseline tabular-nums">
-      <span className="text-gradient">{n}%</span>
-      <span
-        aria-hidden
-        className="text-gradient pointer-events-none absolute inset-0 opacity-60 blur-[14px]"
-      >
-        {n}%
-      </span>
-    </span>
-  );
+  return <span className="text-gradient tabular-nums">{n}%</span>;
 }

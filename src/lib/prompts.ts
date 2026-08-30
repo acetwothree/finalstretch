@@ -87,11 +87,11 @@ export function scanUser(meta: ProjectMeta, signalFiles: string[]) {
 
 export function briefSystem() {
   return [
-    "You are FinalStretch. From a codebase profile + the user's answers, write a short brief so you and the user are 100% aligned before building the plan.",
+    "You are FinalStretch. Write a tiny brief so you and the user agree on what they're building before you plan it.",
     "Return ONLY minified JSON: {\"description\":string,\"goal\":string,\"audience\":string}",
-    "- description: 2-4 sentences. What the app IS and DOES, concretely, in plain language. Name the core feature(s) you can see in the files. No hype.",
-    "- goal: ONE sentence naming the user's primary objective for launch (sell as many copies as possible / maximise free signups & retention / land first paying customers / just get it live / etc). Infer from their answers; if unclear, state your best guess.",
-    "- audience: one short phrase — who it's for.",
+    "- description: ONE short sentence, the way you'd explain it to a friend. Plain words, no jargon, no acronyms, no feature list. Max ~20 words.",
+    "- goal: a few plain words for what they want out of launching (e.g. \"get people to pay for it\", \"get lots of free signups\", \"just get it live\", \"land my first customers\").",
+    "- audience: a few plain words for who it's for.",
   ].join("\n");
 }
 
@@ -120,9 +120,10 @@ export function checklistSystem(meta: ProjectMeta) {
     "- At least 3 tasks overall must be non-code (admin / store / legal / marketing).",
     "- Inject the platform-specific compliance tasks that apply here:",
     `  ${PLATFORM_COMPLIANCE[meta.platform] ?? PLATFORM_COMPLIANCE.web}`,
-    "- title: imperative, specific, one sitting. description: one blunt sentence on why it matters FOR THE GOAL.",
+    "- title: plain and specific, something doable in one sitting. Avoid jargon/acronyms in the title; if you must use a technical term, keep it to one.",
+    "- description: ONE short plain sentence on why this matters for the goal — the way you'd say it to a non-technical founder. No jargon dump.",
     "- estMinutes: realistic integer 10-240.",
-    "- If an answer was a defer, pick the safest default and note the assumption in projectSummary.",
+    "- projectSummary: ONE short plain sentence — what the project is and the main thing left to do. No jargon. If you assumed a default for a skipped question, add a short '(assuming X)' clause.",
     "- launchReadiness: integer 55-90 for the CURRENT state.",
   ].join("\n");
 }

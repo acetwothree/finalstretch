@@ -25,9 +25,9 @@ export const FREE_SCANS = 1;
 export const MAX_SAVED_PROJECTS = 12;
 
 /** One flat plan. Monthly so recurring revenue covers recurring compute. */
-export const PRO_PRICE = 39;
-/** Hard fair-use cap on "make the change" runs so a subscriber can't outrun the price. */
-export const EXECUTE_LIMIT = 30;
+export const PRO_PRICE = 19;
+/** Fair-use cap on the AI-writes-code action (everything else is unlimited). */
+export const EXECUTE_LIMIT = 40;
 
 export type UnlockReason = "scan" | "tasks" | "export" | "execute";
 

@@ -9,18 +9,17 @@ type Phase = "idle" | "redirecting" | "processing" | "done";
 
 const HEADLINE: Record<string, string> = {
   scan: "That was your free scan",
-  tasks: "Unlock the full plan",
-  export: "Export & share are on the paid plan",
-  execute: "“Make the change” is on the paid plan",
+  tasks: "See the whole plan",
+  export: "Save & share need the full plan",
+  execute: "The “do it for me” button needs the full plan",
 };
 
 const PERKS = [
-  "Unlimited scans and full plans for every project",
-  "The whole checklist — not just the first few steps",
-  `“Make this change for me” — Claude writes the real code (${EXECUTE_LIMIT}/mo)`,
-  "One-click patched-project download + open a Pull Request",
-  "Edit any change before it runs · undo anything",
-  "Markdown export + shareable plan links",
+  "Scan as many projects as you want",
+  "The whole checklist, not just the first few steps",
+  `A “do it for me” button on any step (up to ${EXECUTE_LIMIT} a month)`,
+  "It writes the code — you download it or it opens a GitHub PR",
+  "Tweak any change first · undo it after",
 ];
 
 export function UnlockModal() {
@@ -57,7 +56,7 @@ export function UnlockModal() {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={() => phase === "idle" && close()}
-          className="fixed inset-0 z-[60] flex items-center justify-center overflow-y-auto bg-obsidian/92 px-5 py-10 backdrop-blur-sm"
+          className="fixed inset-0 z-[60] flex items-center justify-center overflow-y-auto bg-obsidian/92 px-5 py-10"
         >
           <motion.div
             initial={{ y: 20, scale: 0.97 }}
@@ -92,14 +91,14 @@ export function UnlockModal() {
                 {HEADLINE[reason] ?? HEADLINE.tasks}
               </h2>
               <p className="mt-1 text-sm text-slate-400">
-                One plan, everything included, done-for-you code.
+                One plan. Everything, and it makes the changes for you.
               </p>
 
               <div className="mt-4 flex items-baseline gap-1.5">
                 <span className="text-4xl font-semibold tracking-tight text-white">
                   ${PRO_PRICE}
                 </span>
-                <span className="text-sm text-slate-500">/ month · cancel anytime</span>
+                <span className="text-sm text-slate-500">a month · cancel anytime</span>
               </div>
 
               <ul className="mt-4 space-y-2">

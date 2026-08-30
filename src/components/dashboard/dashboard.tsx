@@ -189,7 +189,7 @@ export function Dashboard() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setLaunched(false)}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-obsidian/90 px-5 backdrop-blur-sm"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-obsidian/90 px-5"
           >
             <motion.div
               initial={{ scale: 0.9, y: 16 }}

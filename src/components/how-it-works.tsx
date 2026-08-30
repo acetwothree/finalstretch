@@ -8,20 +8,20 @@ const STEPS = [
   {
     n: "01",
     icon: ScanLine,
-    title: "Diagnose",
-    body: "Drop a ZIP or connect a repo. FinalStretch reads the file tree, dependencies, and config to find what's actually blocking launch.",
+    title: "Drop it in",
+    body: "Upload a ZIP of your project or paste a GitHub link. It looks through your code to see what's left before launch.",
   },
   {
     n: "02",
     icon: ListChecks,
-    title: "Prioritize",
-    body: "Answer 2–3 sharp questions and get a ranked checklist: critical code fixes, deployment & compliance, marketing & assets.",
+    title: "Get a checklist",
+    body: "Answer a couple of quick questions and get a clear, ordered to-do list — code, launch steps, and what to add or cut.",
   },
   {
     n: "03",
     icon: Rocket,
-    title: "Ship",
-    body: "Open any task and the AI co-pilot hands you the exact diff or step-by-step. Check it off, watch the bar climb, launch.",
+    title: "Clear it",
+    body: "Tap any step and press “do it for me.” Claude makes the change and hands you back your project — or opens a pull request.",
   },
 ];
 

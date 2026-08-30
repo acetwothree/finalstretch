@@ -29,7 +29,7 @@ export function ClarifyingQuestions() {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="fixed inset-0 z-40 flex items-start justify-center overflow-y-auto bg-obsidian/92 px-5 py-10 backdrop-blur-sm sm:items-center"
+      className="fixed inset-0 z-40 flex items-start justify-center overflow-y-auto bg-obsidian/92 px-5 py-10 sm:items-center"
     >
       <motion.div
         initial={{ y: 18, scale: 0.98 }}
@@ -53,9 +53,8 @@ export function ClarifyingQuestions() {
 
           {analysis.source === "mock" && (
             <p className="mt-2 text-xs text-amber-300/80">
-              {analysis.mockReason === "no-key"
-                ? "Demo mode — set FINISHLINE_ANTHROPIC_API_KEY for questions tailored to your code."
-                : "Couldn't reach the AI just now — these are sensible defaults for your stack."}
+              Showing sample questions right now — the live version tailors these
+              to your code.
             </p>
           )}
 

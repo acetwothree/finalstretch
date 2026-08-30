@@ -15,11 +15,11 @@ export function PaywallCard({ lockedCount }: { lockedCount: number }) {
           </div>
           <div>
             <p className="text-sm font-semibold tracking-tight text-white">
-              {lockedCount} more steps — locked
+              {lockedCount} more steps
             </p>
             <p className="mt-0.5 max-w-md text-xs leading-relaxed text-slate-400">
-              Unlock the full checklist, product &amp; growth recommendations, and
-              the &ldquo;make this change for me&rdquo; button on every task.
+              See the whole plan, and get the &ldquo;do it for me&rdquo; button on
+              every step.
             </p>
           </div>
         </div>

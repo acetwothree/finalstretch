@@ -73,7 +73,7 @@ export function BriefConfirm() {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="fixed inset-0 z-40 flex items-start justify-center overflow-y-auto bg-obsidian/92 px-5 py-10 backdrop-blur-sm sm:items-center"
+      className="fixed inset-0 z-40 flex items-start justify-center overflow-y-auto bg-obsidian/92 px-5 py-10 sm:items-center"
     >
       <motion.div
         initial={{ y: 18, scale: 0.98 }}

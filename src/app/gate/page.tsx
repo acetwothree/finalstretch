@@ -33,7 +33,7 @@ function GateForm() {
     <div className="flex min-h-dvh items-center justify-center px-5">
       <form
         onSubmit={submit}
-        className="w-full max-w-sm rounded-2xl border border-white/10 bg-obsidian-soft/80 p-7 backdrop-blur-sm"
+        className="w-full max-w-sm rounded-2xl border border-white/10 bg-obsidian-soft/80 p-7"
       >
         <div className="mb-5 flex items-center justify-between">
           <Logo />

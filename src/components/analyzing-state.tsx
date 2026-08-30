@@ -23,7 +23,7 @@ export function AnalyzingState() {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="fixed inset-0 z-40 flex items-center justify-center bg-obsidian/90 px-5 backdrop-blur-sm"
+      className="fixed inset-0 z-40 flex items-center justify-center bg-obsidian/90 px-5"
     >
       <motion.div
         initial={{ y: 16, scale: 0.98 }}
