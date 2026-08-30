@@ -41,7 +41,7 @@ export async function POST(req: Request) {
         instructions,
         corrections ?? [],
       ),
-      maxTokens: 16000,
+      maxTokens: 24000,
     });
     return NextResponse.json({ ...normalizeExecute(raw), source: "ai" });
   } catch (err) {

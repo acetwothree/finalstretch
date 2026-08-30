@@ -83,6 +83,24 @@ export function BriefConfirm() {
   );
   const canSubmit = description.trim() && goals.length > 0;
 
+  if (generating) {
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="fixed inset-0 z-40 flex items-center justify-center bg-obsidian px-5"
+      >
+        <GlowCard className="w-full max-w-md p-8">
+          <FinishLineBar
+            etaMs={17000}
+            label="Building your launch plan…"
+            sub="Turning your answers into a prioritized, ordered checklist."
+          />
+        </GlowCard>
+      </motion.div>
+    );
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -110,8 +128,8 @@ export function BriefConfirm() {
           </p>
 
           {briefLoading || !brief ? (
-            <div className="mt-10 mb-6">
-              <FinishLineBar label="Reading your project…" />
+            <div className="flex flex-col items-center py-12">
+              <FinishLineBar etaMs={11000} label="Reading your project…" />
             </div>
           ) : (
             <div className="mt-6 space-y-5">

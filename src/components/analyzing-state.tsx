@@ -33,6 +33,7 @@ export function AnalyzingState() {
       >
         <GlowCard className="p-6 sm:p-7">
           <FinishLineBar
+            etaMs={9000}
             label={`Analyzing ${meta.name}…`}
             sub={`Reading your ${
               meta.source === "zip" ? "project files" : "repository"

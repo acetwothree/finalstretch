@@ -82,8 +82,9 @@ export function scanSystem() {
     "- If you can't confidently tell WHERE it ships (a website / an iPhone app / an Android app / a desktop app / a game / a command-line tool), make ONE question ask that with those as plain options.",
     "- One question MUST be about the user's PRIMARY GOAL (get people to pay / get lots of free signups / just get it live / land first customers) — plain options.",
     "- Personalize: reference something concrete you saw (a real filename, dependency, missing file).",
-    "- Plain language for a non-technical founder. Every question's LAST option is a defer: 'Not sure — you decide'. hint: one friendly line.",
-    "- Set allowCustom true only where a typed answer genuinely helps.",
+    "- Plain language for a non-technical founder. hint: one friendly line.",
+    "- EVERY question's LAST option MUST be a plain defer: 'Not sure — you decide'. No exceptions.",
+    "- Set allowCustom:true on EVERY question — the user may need to type an answer you didn't list (e.g. a host you didn't think of, like Hostinger or Railway).",
   ].join("\n");
 }
 
@@ -241,6 +242,8 @@ export function executeSystem() {
     "- runLocally: one short paragraph — how to run it and what proves it worked.",
     "- If the item is genuinely non-code (a store submission, a decision), return files:[] and put the exact steps in runLocally.",
     "- Minimal, scoped change. No refactors, nothing unrelated.",
+    "- SIZE LIMIT: touch at most ~5 files. If the item is bigger than that, ship the smallest working slice now and list what's left as concrete next steps in runLocally. It is better to return a complete, correct partial change than to run out of room.",
+    "- Your JSON output MUST be complete and valid — every string closed, every brace balanced. Never stop mid-object.",
   ].join("\n");
 }
 

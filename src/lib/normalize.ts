@@ -28,13 +28,19 @@ export function normalizeAnalysis(raw: unknown): AnalysisResult {
     .slice(0, 4)
     .map((q, i) => {
       const qo = (q ?? {}) as Record<string, unknown>;
-      const options = arr(qo.options).map((o) => str(o)).filter(Boolean).slice(0, 4);
+      let options = arr(qo.options).map((o) => str(o)).filter(Boolean).slice(0, 5);
+      if (options.length < 2) options = ["Yes", "No"];
+      // Guarantee an escape hatch: a defer option, and always a free-text field.
+      const hasDefer = options.some((o) =>
+        /not sure|you (decide|pick|choose)|doesn'?t matter|none of|other/i.test(o),
+      );
+      if (!hasDefer) options = [...options.slice(0, 4), "Not sure — you decide"];
       return {
         id: str(qo.id) || `q${i + 1}`,
         question: str(qo.question, "Tell me more about your target."),
         hint: str(qo.hint) || undefined,
-        options: options.length >= 2 ? options : ["Yes", "No", "Not sure"],
-        allowCustom: Boolean(qo.allowCustom),
+        options,
+        allowCustom: true,
       };
     });
   if (questions.length < 2) throw new Error("analysis: not enough questions");

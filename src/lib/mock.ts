@@ -110,8 +110,9 @@ export function mockAnalysis(meta: ProjectMeta): AnalysisResult {
           "Yes — accounts and data need to be saved",
           "No — it doesn't need to remember anything",
           "It already saves data and that part works",
-          "Not sure — you check the code",
+          "Not sure — you decide",
         ],
+        allowCustom: true,
       },
       {
         id: "assets",
@@ -122,8 +123,9 @@ export function mockAnalysis(meta: ProjectMeta): AnalysisResult {
           "Haven't started them",
           "Rough drafts exist",
           "Pretty much done",
-          "Not sure — you check",
+          "Not sure — you decide",
         ],
+        allowCustom: true,
       },
     ],
   };

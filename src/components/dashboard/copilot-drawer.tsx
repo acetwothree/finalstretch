@@ -364,8 +364,8 @@ export function CopilotDrawer() {
 
             <div className="flex-1 space-y-4 overflow-y-auto p-5">
               {loading || !task.copilot ? (
-                <div className="py-10">
-                  <FinishLineBar label="Working out the fix…" />
+                <div className="flex flex-col items-center py-12">
+                  <FinishLineBar etaMs={13000} label="Working out the fix…" />
                 </div>
               ) : (
                 <>
@@ -402,6 +402,7 @@ export function CopilotDrawer() {
                   {executeLoading && !task.execute ? (
                     <div className="rounded-xl border border-cyan-400/25 bg-cyan-500/[0.05] p-6">
                       <FinishLineBar
+                        etaMs={45000}
                         label="Writing the change…"
                         sub="Claude is editing your files — this can take a minute."
                       />

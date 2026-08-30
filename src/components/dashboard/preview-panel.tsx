@@ -19,7 +19,7 @@ const WIDTH: Record<Device, string> = {
   tablet: "834px",
   desktop: "100%",
 };
-type Status = "loading" | "ready" | "unsupported" | "error";
+type Status = "loading" | "ready" | "unsupported" | "error" | "private";
 
 export function PreviewPanel() {
   const open = useFlow((s) => s.previewOpen);
@@ -36,6 +36,7 @@ export function PreviewPanel() {
   const hostRef = useRef<HTMLDivElement>(null);
   const [device, setDevice] = useState<Device>("desktop");
   const [status, setStatus] = useState<Status>("loading");
+  const [slow, setSlow] = useState(false);
   const [openUrl, setOpenUrl] = useState<string | null>(null);
 
   useEffect(() => {
@@ -51,6 +52,7 @@ export function PreviewPanel() {
 
     let cancelled = false;
     setStatus("loading");
+    setSlow(false);
     setOpenUrl(null);
     host.innerHTML = "";
 
@@ -79,7 +81,8 @@ export function PreviewPanel() {
     const watchIframe = () => {
       poll = setInterval(() => {
         tries++;
-        if (cancelled || tries > 40) return clearInterval(poll);
+        if (cancelled || tries > 160) return clearInterval(poll); // ~40s
+        if (tries === 48 && !cancelled) setSlow(true); // ~12s: surface the escape hatch
         if (host.querySelector("iframe")) {
           fitIframe();
           setStatus("ready");
@@ -100,6 +103,19 @@ export function PreviewPanel() {
           setOpenUrl(`https://stackblitz.com/github/${slug}`);
           if (!runnable) {
             if (!cancelled) setStatus("unsupported");
+            return;
+          }
+          // A private repo can't be cloned by the in-browser preview — detect it
+          // up front instead of hanging on "Booting…" forever.
+          const repoStatus = await fetch(
+            `https://api.github.com/repos/${or.owner}/${or.repo}`,
+            { headers: { accept: "application/vnd.github+json" } },
+          )
+            .then((r) => r.status)
+            .catch(() => 0);
+          if (cancelled) return;
+          if (repoStatus === 404 || repoStatus === 403) {
+            setStatus("private");
             return;
           }
           watchIframe();
@@ -224,11 +240,46 @@ export function PreviewPanel() {
 
             <div className="relative flex-1 overflow-auto bg-black/30 p-3">
               {status === "loading" && (
-                <div className="absolute inset-0 z-10 flex flex-col items-center justify-center px-8">
+                <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-4 px-8">
                   <FinishLineBar
+                    etaMs={32000}
                     label="Booting your project…"
                     sub="First load installs packages — about 20–40s."
                   />
+                  {slow && openUrl && (
+                    <a
+                      href={openUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-white/15 bg-white/[0.03] px-3 py-2 text-xs text-slate-300 hover:border-cyan-400/40"
+                    >
+                      <ExternalLink className="h-3.5 w-3.5" />
+                      Taking a while — open it in a new tab instead
+                    </a>
+                  )}
+                </div>
+              )}
+              {status === "private" && (
+                <div className="flex h-full flex-col items-center justify-center gap-3 px-8 text-center">
+                  <p className="text-sm text-slate-300">
+                    This repo looks private — the in-browser preview can&apos;t
+                    clone it.
+                  </p>
+                  <p className="max-w-sm text-xs text-slate-500">
+                    Drop the project in as a <span className="text-slate-300">.zip</span>{" "}
+                    to preview it here, or open it in StackBlitz (you&apos;ll need
+                    to sign in and grant repo access).
+                  </p>
+                  {openUrl && (
+                    <a
+                      href={openUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-white/15 bg-white/[0.03] px-3 py-2 text-xs text-slate-200 hover:border-cyan-400/40"
+                    >
+                      <ExternalLink className="h-3.5 w-3.5" /> Open in StackBlitz
+                    </a>
+                  )}
                 </div>
               )}
               {status === "unsupported" && (

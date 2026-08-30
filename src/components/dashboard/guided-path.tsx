@@ -84,13 +84,13 @@ export function GuidedPath() {
   const resolved = seq.filter((t) => t.done || skipSet.has(t.id)).length;
   const allResolved = resolved === seq.length;
 
-  const fullListLink = (
+  const quitLink = (
     <button
       onClick={() => setGuidedMode(false)}
       className="mx-auto mt-4 flex items-center gap-1.5 text-xs text-slate-500 transition-colors hover:text-slate-300"
     >
       <ListChecks className="h-3.5 w-3.5" />
-      See the full list instead
+      Quit walkthrough — back to the full list
     </button>
   );
 
@@ -124,7 +124,7 @@ export function GuidedPath() {
             )}
             <Button variant="outline" onClick={() => setGuidedMode(false)}>
               <ListChecks className="h-4 w-4" />
-              See the full list
+              Done — back to the full list
             </Button>
           </div>
         </GlowCard>
@@ -152,6 +152,19 @@ export function GuidedPath() {
 
   return (
     <div>
+      <div className="mb-2 flex items-center justify-between">
+        <span className="inline-flex items-center gap-1.5 rounded-md border border-violet-400/25 bg-violet-500/10 px-2 py-0.5 text-[11px] font-medium text-violet-200">
+          <Sparkles className="h-3 w-3" />
+          Guided walkthrough
+        </span>
+        <button
+          onClick={() => setGuidedMode(false)}
+          className="flex items-center gap-1 text-xs text-slate-400 transition-colors hover:text-white"
+        >
+          <X className="h-3.5 w-3.5" />
+          Quit
+        </button>
+      </div>
       <GlowCard className="overflow-hidden p-6 sm:p-7">
         {/* progress header */}
         <div className="flex items-center justify-between text-xs">
@@ -287,7 +300,7 @@ export function GuidedPath() {
         </div>
       </GlowCard>
 
-      {fullListLink}
+      {quitLink}
     </div>
   );
 }

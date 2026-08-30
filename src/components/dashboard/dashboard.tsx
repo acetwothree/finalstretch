@@ -12,6 +12,7 @@ import {
   PartyPopper,
   Rocket,
   Share2,
+  Sparkles,
   TrendingUp,
   Wrench,
 } from "lucide-react";
@@ -65,6 +66,7 @@ export function Dashboard() {
   const openPreview = useFlow((s) => s.openPreview);
   const [launched, setLaunched] = useState(false);
   const [showCorrect, setShowCorrect] = useState(false);
+  const [activeCat, setActiveCat] = useState<TaskCategory | "all">("all");
 
   const readiness = useMemo(
     () =>
@@ -85,6 +87,9 @@ export function Dashboard() {
   const ready = readiness >= 100;
   const canRun = canRunInBrowser(meta);
   const repo = parseOwnerRepo(meta.githubUrl);
+  const presentCats = TASK_CATEGORIES.filter((c) =>
+    checklist.tasks.some((t) => t.category === c),
+  );
 
   return (
     <motion.main
@@ -254,40 +259,65 @@ export function Dashboard() {
         )}
       </div>
 
-      {/* guided / full-list switch */}
-      <div className="mt-6 flex w-fit items-center gap-1 rounded-lg border border-white/10 bg-white/[0.02] p-1">
-        {(
-          [
-            ["guided", "Guided"],
-            ["full", "Full list"],
-          ] as const
-        ).map(([k, label]) => {
-          const on = (k === "guided") === guidedMode;
-          return (
-            <button
-              key={k}
-              onClick={() => setGuidedMode(k === "guided")}
-              className={cn(
-                "rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
-                on ? "bg-white/10 text-white" : "text-slate-400 hover:text-white",
-              )}
-            >
-              {label}
-            </button>
-          );
-        })}
-      </div>
-      <p className="mt-1.5 text-xs text-slate-500">
-        {guidedMode
-          ? "One step at a time, in the order I'd tackle them. Skip or go back anytime."
-          : "Every step at once — check off whatever you want."}
-      </p>
+      {/* guided walkthrough entry — the full list is always the default view */}
+      {!guidedMode && (
+        <button
+          onClick={() => setGuidedMode(true)}
+          className="group mt-6 flex w-full items-center justify-between gap-3 rounded-2xl border border-violet-400/25 bg-[linear-gradient(135deg,rgba(139,92,246,0.14),rgba(99,102,241,0.05))] px-5 py-4 text-left transition-colors hover:border-violet-400/50"
+        >
+          <span className="flex items-center gap-3">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-violet-400/30 bg-violet-500/10">
+              <Sparkles className="h-4 w-4 text-violet-200" />
+            </span>
+            <span>
+              <span className="block text-sm font-semibold text-white">
+                Start the guided walkthrough
+              </span>
+              <span className="block text-xs text-slate-400">
+                One step at a time, in the order I&apos;d tackle them. Quit whenever.
+              </span>
+            </span>
+          </span>
+          <ArrowRight className="h-4 w-4 shrink-0 text-violet-300 transition-transform group-hover:translate-x-0.5" />
+        </button>
+      )}
 
       <div className="mt-4 grid gap-6 lg:grid-cols-[1fr_320px]">
-        <div className="space-y-6">
-          {guidedMode
-            ? <GuidedPath />
-            : TASK_CATEGORIES.map((cat) => {
+        <div className="min-w-0 space-y-5">
+          {guidedMode ? (
+            <GuidedPath />
+          ) : (
+            <>
+              {/* category tabs — jump instead of scroll */}
+              <div className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1">
+                {(["all", ...presentCats] as (TaskCategory | "all")[]).map((c) => {
+                  const on = activeCat === c;
+                  const list =
+                    c === "all"
+                      ? checklist.tasks
+                      : checklist.tasks.filter((t) => t.category === c);
+                  const cdone = list.filter((t) => t.done).length;
+                  return (
+                    <button
+                      key={c}
+                      onClick={() => setActiveCat(c)}
+                      className={cn(
+                        "shrink-0 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors",
+                        on
+                          ? "border-white/20 bg-white/10 text-white"
+                          : "border-white/10 bg-white/[0.02] text-slate-400 hover:text-white",
+                      )}
+                    >
+                      {c === "all" ? "All" : c}{" "}
+                      <span className="ml-0.5 font-mono text-[10px] text-slate-500">
+                        {cdone}/{list.length}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {(activeCat === "all" ? presentCats : [activeCat]).map((cat) => {
                 const tasks = checklist.tasks.filter((t) => t.category === cat);
                 if (!tasks.length) return null;
                 const cm = CATEGORY_META[cat];
@@ -312,7 +342,8 @@ export function Dashboard() {
                         return (
                           <div key={t.id}>
                             <TaskRow task={t} locked={locked} />
-                            {gated &&
+                            {activeCat === "all" &&
+                              gated &&
                               globalIdx === FREE_TASKS - 1 &&
                               lockedCount > 0 && (
                                 <div className="pt-2.5">
@@ -326,6 +357,15 @@ export function Dashboard() {
                   </section>
                 );
               })}
+
+              {activeCat !== "all" &&
+                gated &&
+                lockedCount > 0 &&
+                checklist.tasks.some(
+                  (t, i) => t.category === activeCat && i >= FREE_TASKS,
+                ) && <PaywallCard lockedCount={lockedCount} />}
+            </>
+          )}
         </div>
 
         <div className="hidden lg:block">
@@ -346,6 +386,7 @@ export function Dashboard() {
           >
             <GlowCard className="w-full max-w-md p-8">
               <FinishLineBar
+                etaMs={17000}
                 label="Rebuilding your plan with your note…"
                 sub="Every step gets re-checked against what you just told it."
               />

@@ -146,78 +146,48 @@ body {
 }
 
 /* --- "final stretch" themed loader --- */
-@keyframes fl-race {
-  0% {
-    width: 6%;
-  }
-  62% {
-    width: 100%;
-  }
-  100% {
-    width: 100%;
-    opacity: 1;
-  }
-}
-@keyframes fl-race-flash {
-  0%,
-  55% {
-    opacity: 0;
-  }
-  70% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-  }
-}
-
 .fl-checkers {
   background-image: linear-gradient(
       90deg,
-      rgb(139 92 246 / 0.55),
-      rgb(34 211 238 / 0.55)
+      rgb(139 92 246 / 0.6),
+      rgb(34 211 238 / 0.6)
     ),
     repeating-conic-gradient(#eceef3 0% 25%, #0b0d14 0% 50%);
   background-size:
     100% 100%,
     12px 12px;
 }
-.fl-race {
-  /* static fallback width so the bar still reads as "in progress" when
-     animations are disabled (reduced-motion / headless) */
-  width: 45%;
-  animation: fl-race 1.9s cubic-bezier(0.45, 0.05, 0.15, 1) infinite;
+@keyframes fl-bar-sheen {
+  0% {
+    transform: translateX(-130%);
+  }
+  100% {
+    transform: translateX(360%);
+  }
 }
-.fl-flag-flash {
-  animation: fl-race-flash 1.9s cubic-bezier(0.45, 0.05, 0.15, 1) infinite;
+.fl-bar-sheen {
+  background: linear-gradient(
+    100deg,
+    transparent 15%,
+    rgb(255 255 255 / 0.6) 50%,
+    transparent 85%
+  );
+  animation: fl-bar-sheen 1.4s ease-in-out infinite;
 }
 
-/* small gradient ring spinner for buttons / inline */
+/* small two-tone ring spinner for buttons / inline (border-based = b/ bulletproof) */
 @keyframes fl-spin {
   to {
     transform: rotate(360deg);
   }
 }
 .fl-spinner {
+  box-sizing: border-box;
   border-radius: 9999px;
-  background: conic-gradient(
-    from 0deg,
-    transparent 0 8%,
-    #a78bfa 45%,
-    #22d3ee 72%,
-    transparent 82% 100%
-  );
-  -webkit-mask: radial-gradient(
-    farthest-side,
-    transparent calc(100% - 2.5px),
-    #000 calc(100% - 2px)
-  );
-  mask: radial-gradient(
-    farthest-side,
-    transparent calc(100% - 2.5px),
-    #000 calc(100% - 2px)
-  );
-  animation: fl-spin 0.8s linear infinite;
+  border: 2px solid rgb(139 92 246 / 0.25);
+  border-top-color: #a78bfa;
+  border-right-color: #22d3ee;
+  animation: fl-spin 0.7s linear infinite;
 }
 
 .radar-sweep {
