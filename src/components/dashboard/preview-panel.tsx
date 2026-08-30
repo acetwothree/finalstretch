@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import sdk from "@stackblitz/sdk";
 import {
   ExternalLink,
   Loader2,
@@ -97,6 +96,7 @@ export function PreviewPanel() {
 
     (async () => {
       try {
+        const sdk = (await import("@stackblitz/sdk")).default;
         // github — a change on its PR branch, or the current version
         if (meta.source === "github" && or) {
           const slug =

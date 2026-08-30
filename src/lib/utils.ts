@@ -9,13 +9,13 @@ export function clamp(n: number, lo = 0, hi = 100) {
   return Math.min(hi, Math.max(lo, n));
 }
 
+/** Coarse, honest-feeling time buckets (exact minute counts always felt wrong). */
 export function formatDuration(mins: number) {
-  if (mins <= 0) return "0m";
-  const h = Math.floor(mins / 60);
-  const m = Math.round(mins % 60);
-  if (h && m) return `${h}h ${m}m`;
-  if (h) return `${h}h`;
-  return `${m}m`;
+  if (mins <= 12) return "a few min";
+  if (mins <= 25) return "~20 min";
+  if (mins <= 45) return "~40 min";
+  if (mins <= 75) return "~1 hr";
+  return "1 hr+";
 }
 
 export function slugify(input: string) {

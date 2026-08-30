@@ -40,7 +40,7 @@ export function normalizeAnalysis(raw: unknown): AnalysisResult {
   if (questions.length < 2) throw new Error("analysis: not enough questions");
   return {
     summary: str(r.summary, "Scan complete — a few questions before I build the plan."),
-    readiness: clamp(Math.round(Number(r.readiness) || 72), 55, 92),
+    readiness: clamp(Math.round(Number(r.readiness) || 55), 5, 95),
     questions,
   };
 }
@@ -139,7 +139,7 @@ export function normalizeChecklist(raw: unknown): ChecklistResult {
   if (tasks.length < 4) throw new Error("checklist: too few tasks");
   return {
     projectSummary: str(r.projectSummary, "Your prioritized path to launch."),
-    launchReadiness: clamp(Math.round(Number(r.launchReadiness) || 70), 40, 90),
+    launchReadiness: clamp(Math.round(Number(r.launchReadiness) || 55), 8, 90),
     tasks,
   };
 }

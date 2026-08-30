@@ -135,6 +135,7 @@ interface FlowState {
 
   previewOpen: boolean;
   previewTaskId: string | null;
+  scanFiles: { path: string; content: string }[];
 
   setHydrated: () => void;
   startZip: (file: File) => Promise<void>;
@@ -142,7 +143,7 @@ interface FlowState {
   clearIngestError: () => void;
   setAnswer: (id: string, value: string) => void;
   requestBrief: () => Promise<void>;
-  confirmBrief: (edited: Partial<AppBrief>) => Promise<void>;
+  confirmBrief: (edited: Partial<AppBrief>, builtPercent?: number) => Promise<void>;
   toggleTask: (id: string) => void;
   dismissTask: (id: string) => void;
   openCopilot: (taskId: string) => Promise<void>;
@@ -200,6 +201,7 @@ const initial = {
   prError: null,
   previewOpen: false,
   previewTaskId: null as string | null,
+  scanFiles: [] as { path: string; content: string }[],
 };
 
 export const useFlow = create<FlowState>()(
@@ -271,8 +273,12 @@ export const useFlow = create<FlowState>()(
 
         const startedAt = Date.now();
         let analysis: AnalysisResult;
+        let files: { path: string; content: string }[] = [];
         try {
-          analysis = await postJson<AnalysisResult>("/api/analyze", { meta });
+          const { gatherScanFiles } = await import("./file-contents");
+          files = await gatherScanFiles(meta).catch(() => []);
+          set({ scanFiles: files });
+          analysis = await postJson<AnalysisResult>("/api/analyze", { meta, files });
         } catch {
           analysis = {
             ...mockAnalysis(meta),
@@ -359,26 +365,41 @@ export const useFlow = create<FlowState>()(
         },
 
         async requestBrief() {
-          const { meta, answers } = get();
+          const { meta, answers, scanFiles } = get();
           if (!meta) return;
           set({ stage: "brief", briefLoading: true, brief: null, error: null });
           let brief: AppBrief;
           try {
-            brief = await postJson<AppBrief>("/api/brief", { meta, answers });
+            brief = await postJson<AppBrief>("/api/brief", {
+              meta,
+              answers,
+              files: scanFiles,
+            });
           } catch {
             brief = { ...mockBrief(meta, answers), source: "mock" };
           }
           set({ brief, briefLoading: false });
         },
 
-        async confirmBrief(edited) {
-          const { meta, answers, brief } = get();
-          if (!meta) return;
+        async confirmBrief(edited, builtPercent) {
+          const s0 = get();
+          const answers = s0.answers;
+          if (!s0.meta) return;
+          const meta =
+            typeof builtPercent === "number"
+              ? { ...s0.meta, builtPercent: clamp(Math.round(builtPercent), 3, 98) }
+              : s0.meta;
           const finalBrief: AppBrief = {
-            ...(brief ?? mockBrief(meta, answers)),
+            ...(s0.brief ?? mockBrief(meta, answers)),
             ...edited,
           };
-          set({ brief: finalBrief, stage: "generating", error: null });
+          set({
+            meta,
+            brief: finalBrief,
+            builtPercent: meta.builtPercent ?? s0.builtPercent,
+            stage: "generating",
+            error: null,
+          });
           try {
             const checklist = await postJson<ChecklistResult>("/api/checklist", {
               meta,

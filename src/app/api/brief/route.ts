@@ -3,16 +3,16 @@ import { aiEnabled, askJson, SCAN_MODEL } from "@/lib/anthropic";
 import { mockBrief } from "@/lib/mock";
 import { normalizeBrief } from "@/lib/normalize";
 import { briefSystem, briefUser } from "@/lib/prompts";
-import { pickSignalFiles } from "@/lib/signal-files";
 import type { Answers, ProjectMeta } from "@/lib/types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
-  const { meta, answers } = (await req.json()) as {
+  const { meta, answers, files } = (await req.json()) as {
     meta: ProjectMeta;
     answers: Answers;
+    files?: { path: string; content: string }[];
   };
   if (!meta) return NextResponse.json({ error: "missing meta" }, { status: 400 });
 
@@ -21,12 +21,11 @@ export async function POST(req: Request) {
   }
 
   try {
-    const signal = pickSignalFiles(meta.fileTree, 36);
     const raw = await askJson<unknown>({
       model: SCAN_MODEL,
       system: briefSystem(),
-      user: briefUser(meta, answers ?? {}, signal),
-      maxTokens: 500,
+      user: briefUser(meta, answers ?? {}, files ?? []),
+      maxTokens: 600,
     });
     return NextResponse.json({ ...normalizeBrief(raw), source: "ai" });
   } catch (err) {

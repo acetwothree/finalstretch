@@ -23,17 +23,20 @@ export function BriefConfirm() {
   const briefLoading = useFlow((s) => s.briefLoading);
   const stage = useFlow((s) => s.stage);
   const confirmBrief = useFlow((s) => s.confirmBrief);
+  const aiReadiness = useFlow((s) => s.analysis?.readiness ?? null);
 
   const [description, setDescription] = useState("");
   const [goals, setGoals] = useState<string[]>([]);
   const [customGoal, setCustomGoal] = useState("");
   const [audience, setAudience] = useState("");
+  const [pct, setPct] = useState(60);
   const [touched, setTouched] = useState(false);
 
   useEffect(() => {
     if (brief && !touched) {
       setDescription(brief.description);
       setAudience(brief.audience);
+      if (aiReadiness != null) setPct(aiReadiness);
       const raw = brief.goal || "";
       const parts = raw.split(/[·;\n]+/).map((s) => s.trim()).filter(Boolean);
       const seeded = new Set<string>();
@@ -52,7 +55,7 @@ export function BriefConfirm() {
       }
       setGoals([...seeded]);
     }
-  }, [brief, touched]);
+  }, [brief, touched, aiReadiness]);
 
   const generating = stage === "generating";
   const toggle = (g: string) => {
@@ -213,6 +216,32 @@ export function BriefConfirm() {
                 />
               </label>
 
+              <div>
+                <div className="flex items-baseline justify-between">
+                  <span className="text-xs font-medium uppercase tracking-wider text-slate-500">
+                    How close to done, really?
+                  </span>
+                  <span className="font-mono text-sm font-semibold text-violet-200">
+                    {pct}%
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min={3}
+                  max={98}
+                  value={pct}
+                  onChange={(e) => {
+                    setTouched(true);
+                    setPct(Number(e.target.value));
+                  }}
+                  className="fl-range mt-1.5"
+                />
+                <p className="mt-1 text-[11px] text-slate-500">
+                  My guess from the code is filled in — drag it to what you know is
+                  true. It changes how the plan is scoped.
+                </p>
+              </div>
+
               {brief.plan && (
                 <div className="rounded-lg border border-white/10 bg-white/[0.02] p-3">
                   <span className="text-xs font-medium uppercase tracking-wider text-slate-500">
@@ -231,13 +260,16 @@ export function BriefConfirm() {
               size="lg"
               disabled={briefLoading || generating || !canSubmit}
               onClick={() =>
-                void confirmBrief({
-                  description: description.trim(),
-                  goal: goals.includes(NOT_SURE)
-                    ? "Not sure — you decide"
-                    : goals.join(" · "),
-                  audience: audience.trim() || "Not sure — you decide",
-                })
+                void confirmBrief(
+                  {
+                    description: description.trim(),
+                    goal: goals.includes(NOT_SURE)
+                      ? "Not sure — you decide"
+                      : goals.join(" · "),
+                    audience: audience.trim() || "Not sure — you decide",
+                  },
+                  pct,
+                )
               }
             >
               {generating ? (

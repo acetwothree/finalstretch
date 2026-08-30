@@ -62,12 +62,13 @@ const PLATFORM_COMPLIANCE: Record<string, string> = {
 
 export function scanSystem() {
   return [
-    "You are FinalStretch, triaging a codebase that is ~75-90% done to find what's left before it can ship.",
+    "You are FinalStretch, triaging a half-built codebase to find what's left before it can ship.",
+    "You are given the actual CONTENTS of the key files (README, entry point, core source). READ THEM. Don't guess from filenames.",
     "Return ONLY minified JSON, no prose, no markdown:",
     '{"summary":string,"readiness":number,"questions":[{"id":string,"question":string,"hint":string,"options":string[],"allowCustom":boolean}]}',
-    "- summary: ONE plain sentence — what the project is + the single biggest thing between it and launch.",
-    "- readiness: integer 55-92.",
-    "- questions: 2 or 3. ONLY ask what you genuinely cannot infer from the files. Skip anything the file list already answers.",
+    "- summary: ONE plain sentence — what the project ACTUALLY is (per the README / code you were given) + the single biggest thing between it and launch. If the README says it's an aim trainer, say aim trainer.",
+    "- readiness: integer 5-95. Be HONEST and judge by whether the CORE thing works in the code you can see — not by file count. No gameplay loop / no working core feature / lots of stubs => 10-30. Core works, needs polish + launch prep => 60-85. When unsure, lean LOW.",
+    "- questions: 2 or 3. ONLY ask what you genuinely cannot infer from the files you were given.",
     "- If you can't confidently tell WHAT the app does, make ONE question ask that in plain words (allowCustom true, e.g. 'In one line, what does your app do?').",
     "- If you can't confidently tell WHERE it ships (a website / an iPhone app / an Android app / a desktop app / a game / a command-line tool), make ONE question ask that with those as plain options.",
     "- One question MUST be about the user's PRIMARY GOAL (get people to pay / get lots of free signups / just get it live / land first customers) — plain options.",
@@ -77,14 +78,24 @@ export function scanSystem() {
   ].join("\n");
 }
 
-export function scanUser(meta: ProjectMeta, signalFiles: string[]) {
+export function scanUser(
+  meta: ProjectMeta,
+  signalFiles: string[],
+  fileContents: { path: string; content: string }[] = [],
+) {
+  const contents = fileContents.length
+    ? fileContents.map((f) => `\n=== ${f.path} ===\n${f.content}`).join("\n")
+    : "  (none — infer from the tree)";
   return [
     `Project: ${meta.name} (${meta.source})`,
     `Detected: ${meta.detectedType} · platform ${meta.platform} · ${meta.fileCount} files`,
     `Stack: ${meta.detectedStack.join(", ") || "unknown"}`,
     `Findings: ${meta.notes.join("; ")}`,
-    `Key files:`,
-    ...signalFiles.map((f) => `  ${f}`),
+    `File tree (names only):`,
+    ...signalFiles.slice(0, 60).map((f) => `  ${f}`),
+    "",
+    "KEY FILE CONTENTS (read these to judge what it is and how done it is):",
+    contents,
   ].join("\n");
 }
 
@@ -93,8 +104,9 @@ export function scanUser(meta: ProjectMeta, signalFiles: string[]) {
 export function briefSystem() {
   return [
     "You are FinalStretch. Write a tiny brief so you and the user agree on what they're building before you plan it.",
+    "You are given the CONTENTS of the key files (README, entry point, core source). Read them — describe what the project ACTUALLY is, not what the filenames suggest.",
     'Return ONLY minified JSON: {"description":string,"goal":string,"audience":string,"plan":string,"unsure":boolean}',
-    "- description: ONE plain sentence a non-technical friend would get. Name 1-2 CONCRETE things you can see in the files (a real screen, feature, or page) so it reads as THIS project, not a generic template. Max ~25 words. No jargon dump.",
+    "- description: ONE plain sentence a non-technical friend would get. Name 1-2 CONCRETE things you can see in the code/README (a real screen, feature, or mechanic) so it reads as THIS project, not a generic template. Max ~25 words. No jargon dump.",
     "- If the files genuinely don't tell you what it does, set unsure:true and write the description as an honest guess: \"Looks like <X> — correct me below.\"",
     "- goal: a few plain words for what they want from launching (e.g. \"get people to pay for it\", \"get lots of free signups\", \"just get it live\").",
     "- audience: a few plain words for who it's for.",
@@ -102,14 +114,22 @@ export function briefSystem() {
   ].join("\n");
 }
 
-export function briefUser(meta: ProjectMeta, answers: Answers, signalFiles: string[]) {
+export function briefUser(
+  meta: ProjectMeta,
+  answers: Answers,
+  fileContents: { path: string; content: string }[] = [],
+) {
   const a = Object.entries(answers)
     .map(([k, v]) => `  - ${k}: ${v}`)
     .join("\n");
+  const contents = fileContents.length
+    ? fileContents.map((f) => `\n=== ${f.path} ===\n${f.content}`).join("\n")
+    : "  (none)";
   return [
     `Detected: ${meta.detectedType} · ${meta.detectedStack.join(", ") || "?"}`,
     `Findings: ${meta.notes.join("; ")}`,
-    `Key files:\n${signalFiles.map((f) => `  ${f}`).join("\n")}`,
+    "KEY FILE CONTENTS (read to describe what it ACTUALLY is):",
+    contents,
     `User answers:\n${a || "  (none)"}`,
   ].join("\n");
 }
@@ -129,7 +149,7 @@ export function checklistSystem(meta: ProjectMeta) {
     `  ${PLATFORM_COMPLIANCE[meta.platform] ?? PLATFORM_COMPLIANCE.web}`,
     "- title: plain and specific, something doable in one sitting. Avoid jargon/acronyms in the title; if you must use a technical term, keep it to one.",
     "- description: ONE short plain sentence on why this matters for the goal — the way you'd say it to a non-technical founder. No jargon dump.",
-    "- estMinutes: realistic integer 10-240.",
+    "- estMinutes: how long for an experienced dev WITH an AI assistant doing most of the typing. Most single items are 10-25 min. Only use 45+ for genuinely multi-file work. Do NOT pad. Cap at 90.",
     "- projectSummary: ONE short plain sentence — what the project is and the main thing left to do. No jargon. If you assumed a default for a skipped question, add a short '(assuming X)' clause.",
     "- launchReadiness: integer 55-90 for the CURRENT state.",
   ].join("\n");

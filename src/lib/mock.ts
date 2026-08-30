@@ -30,7 +30,7 @@ const clip = (mins: number) => clamp(mins, 5, 480);
 
 export function mockAnalysis(meta: ProjectMeta): AnalysisResult {
   const noteCount = meta.notes.filter((n) => !n.startsWith("Structure looks")).length;
-  const readiness = clamp((meta.builtPercent ?? 78) - noteCount * 2, 55, 92);
+  const readiness = clamp((meta.builtPercent ?? 55) - noteCount * 3, 12, 90);
 
   const DEFER = "Not sure — you decide";
 
@@ -71,15 +71,16 @@ export function mockAnalysis(meta: ProjectMeta): AnalysisResult {
   };
 
   return {
-    summary: `Triage: ${meta.name} is a ${meta.detectedType} sitting at roughly ${
-      meta.builtPercent ?? readiness
-    }% done. The build works — what's missing is the last-mile: ${
-      meta.platform === "ios"
-        ? "App Store compliance, screenshots, and a TestFlight pass"
-        : meta.platform === "game"
-          ? "Steam store setup, capsule art, and a review submission"
-          : "deploy wiring, legal pages, and launch assets"
-    }. That's a weekend, not a rewrite.`,
+    summary:
+      readiness < 45
+        ? `${meta.name} is an early ${meta.detectedType} — the core isn't fully there yet, so the plan starts with finishing the main feature, then launch prep.`
+        : `${meta.name} is a ${meta.detectedType} that's mostly built — what's left is ${
+            meta.platform === "ios"
+              ? "App Store compliance, screenshots, and a TestFlight pass"
+              : meta.platform === "game"
+                ? "Steam store setup, capsule art, and a review submission"
+                : "deploy wiring, legal pages, and launch assets"
+          }.`,
     readiness,
     questions: [
       {
@@ -205,7 +206,7 @@ export function mockChecklist(
     description: "The stuck-at-80% trap is half-wired branches in the one flow users actually take.",
     category: "Critical Code Fixes",
     severity: "high",
-    estMinutes: 90,
+    estMinutes: 45,
     copilot: cp(
       "Done = zero `[block]` TODOs left in the primary user flow. Everything else becomes an issue.",
       [
@@ -354,7 +355,7 @@ export function mockChecklist(
     description: "The first visual does 80% of the convincing before anyone reads a word.",
     category: "Marketing & Assets",
     severity: assetsEarly ? "high" : "medium",
-    estMinutes: 90,
+    estMinutes: 45,
     copilot: cp(
       "Done = the money shot, framed, captioned, exported at every required size.",
       [
@@ -534,7 +535,7 @@ export function mockChecklist(
         description: "A signup wall in front of unproven value is the biggest growth leak there is.",
         category: "Product & Growth",
         severity: "high",
-        estMinutes: 90,
+        estMinutes: 45,
         copilot: cp(
           "Done = a visitor can do the main action once (or in a sandbox) with zero account.",
           [
@@ -618,7 +619,7 @@ export function mockChecklist(
         description: "You know the rough spots. A viewer notices them in the first 20 seconds.",
         category: "Product & Growth",
         severity: "high",
-        estMinutes: 90,
+        estMinutes: 45,
         copilot: cp(
           "Done = the three embarrassing bits are fixed or hidden.",
           [
@@ -756,9 +757,9 @@ export function mockChecklist(
   niceToHave.forEach(add);
 
   const base = clamp(
-    (meta.builtPercent ?? 78) - meta.notes.length * 2 - (noDb ? 6 : 0),
-    55,
-    88,
+    (meta.builtPercent ?? 55) - meta.notes.length * 3 - (noDb ? 8 : 0),
+    12,
+    86,
   );
 
   return {
@@ -794,7 +795,7 @@ export function mockBrief(meta: ProjectMeta, answers: Answers): AppBrief {
   return {
     description: `${meta.name} looks like ${feature} built with ${
       meta.detectedStack.slice(0, 2).join(" and ") || meta.languages[0] || "a modern stack"
-    }, roughly ${meta.builtPercent ?? 80}% done — correct me if that's off.`,
+    }, roughly ${meta.builtPercent ?? 55}% done — correct me if that's off.`,
     goal: GOAL[goal],
     audience: "The people it's built for.",
     plan: `Get it deployable, close the gaps (${

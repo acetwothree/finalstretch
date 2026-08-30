@@ -10,7 +10,10 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
-  const { meta } = (await req.json()) as { meta: ProjectMeta };
+  const { meta, files } = (await req.json()) as {
+    meta: ProjectMeta;
+    files?: { path: string; content: string }[];
+  };
   if (!meta) return NextResponse.json({ error: "missing meta" }, { status: 400 });
 
   if (!aiEnabled()) {
@@ -26,8 +29,8 @@ export async function POST(req: Request) {
     const raw = await askJson<unknown>({
       model: SCAN_MODEL,
       system: scanSystem(),
-      user: scanUser(meta, signal),
-      maxTokens: 700,
+      user: scanUser(meta, signal, files ?? []),
+      maxTokens: 900,
     });
     return NextResponse.json({ ...normalizeAnalysis(raw), source: "ai" });
   } catch (err) {

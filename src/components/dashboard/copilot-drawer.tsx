@@ -373,6 +373,17 @@ export function CopilotDrawer() {
                     {task.description}
                   </p>
 
+                  {!asking && !task.execute && !executeLoading && (
+                    <div className="rounded-lg border border-cyan-400/20 bg-cyan-500/[0.06] p-3">
+                      <p className="text-[11px] font-medium uppercase tracking-wider text-cyan-300/80">
+                        &ldquo;Do it for me&rdquo; will
+                      </p>
+                      <p className="mt-1 text-sm leading-relaxed text-slate-200">
+                        {task.copilot.summary}
+                      </p>
+                    </div>
+                  )}
+
                   {/* the change result */}
                   {executeLoading && !task.execute ? (
                     <div className="space-y-2 rounded-xl border border-cyan-400/25 bg-cyan-500/[0.05] p-4">
@@ -392,10 +403,7 @@ export function CopilotDrawer() {
                   {asking && (
                     <div className="rounded-xl border border-cyan-400/25 bg-cyan-500/[0.06] p-4">
                       <p className="text-sm font-medium text-white">
-                        Here&apos;s what Claude will do:
-                      </p>
-                      <p className="mt-1 rounded-lg bg-black/20 p-2.5 text-xs leading-relaxed text-slate-300">
-                        {task.copilot.summary}
+                        Claude will: {task.copilot.summary}
                       </p>
 
                       <label className="mt-3 block text-xs text-slate-400">
